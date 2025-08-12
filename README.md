@@ -126,7 +126,9 @@ This simple interface abstracts away the complexity of dealing with multipart fi
 
 
 ### Custom Fields Endpoint Usage
-The `CustomField` class within our Laravel ClickUp API package serves as a dedicated endpoint for interacting with custom fields in ClickUp. Custom fields are pivotal in tailoring ClickUp's lists to your project's specific requirements, allowing for the addition of unique data fields to tasks. Utilizing the `CustomField` class, you can effortlessly retrieve all custom fields associated with a specific list by providing the list's ID.
+The `CustomField` class within our Laravel ClickUp API package serves as a dedicated endpoint for interacting with custom fields in ClickUp. Custom fields are pivotal in tailoring ClickUp's lists to your project's specific requirements, allowing for the addition of unique data fields to tasks. Utilizing the `CustomField` class, you can effortlessly retrieve all custom fields associated with a specific list and create custom field values for tasks.
+
+#### Retrieving Custom Fields
 
 Here's a quick guide on how to use the `CustomField` endpoint to fetch custom fields:
 
@@ -143,7 +145,26 @@ $customFields = app(CustomField::class)->show($listId);
 // $customFields now contains the response from ClickUp API
 ```
 
-Ensure you replace `'your_list_id_here'` with the actual ID of the list whose custom fields you wish to retrieve. This simple and intuitive approach allows you to integrate custom field data from ClickUp directly into your Laravel application, enhancing data management and project customization capabilities.
+#### Creating Custom Field Values
+
+You can also create custom field values for specific tasks using the `create` method:
+
+```php
+// Import the CustomField class at the top of your PHP file
+use Mindtwo\LaravelClickUpApi\Endpoints\CustomField;
+
+// Parameters needed for creating a custom field value
+$taskId = 'your_task_id_here'; // Replace with your actual task ID
+$fieldId = 'your_field_id_here'; // Replace with your actual field ID
+$value = 'your_field_value'; // The value you want to set for the custom field
+
+// Create a custom field value for the specified task
+$response = app(CustomField::class)->create($taskId, $fieldId, $value);
+
+// $response now contains the response from ClickUp API
+```
+
+Ensure you replace the placeholder values with your actual IDs. The `create` method allows you to set custom field values for tasks, providing flexibility in managing task-specific data within your ClickUp workspace.
 
 ### ListCustomFieldsCommand
 The ListCustomFieldsCommand class is a Laravel console command provided by the Laravel ClickUp API package, enabling users to list all available custom fields for a specified list in ClickUp. By executing the command php artisan clickup:list-custom-fields, users can either provide a list ID or mapping key directly via the --list option or they will be prompted to enter it. This command is particularly useful for developers and administrators who need to quickly view the custom field configurations within their ClickUp lists, including details such as field ID, name, type, configuration options, creation date, visibility to guests, and whether the field is required. The command outputs this information in a well-organized table format, making it easy to read and analyze directly from the terminal.

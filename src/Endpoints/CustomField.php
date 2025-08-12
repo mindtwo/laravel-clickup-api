@@ -14,4 +14,13 @@ class CustomField
     {
         return $this->api->client->get(sprintf('/list/%s/field', $listId));
     }
+
+    public function create(string $taskId, string $fieldId, $value)
+    {
+        $payload = [
+            'value' => $value,
+        ];
+
+        return $this->api->client->post(sprintf('/task/%s/field/%s', $taskId, $fieldId), $payload);
+    }
 }

@@ -1,0 +1,25 @@
+grumphp:
+  hooks_dir: ~
+  hooks_preset: local
+
+  # Stop on failure prevents commits when tasks fail
+  stop_on_failure: true
+
+  # Ignore unstaged changes - only check what's being committed
+  ignore_unstaged_changes: true
+
+  # Process run mode (parallel for faster execution)
+  process_timeout: 60
+
+  # ASCII art configuration
+  ascii:
+    failed: ~
+    succeeded: ~
+
+  # Tasks to run on git commit
+  tasks:
+    # Run the existing composer lint script
+    composer_script:
+      script: 'lint'
+      triggered_by: ['php']
+      working_directory: './'

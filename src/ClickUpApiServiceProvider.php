@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mindtwo\LaravelClickUpApi;
 
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
@@ -21,15 +23,13 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
             ->hasConfigFile('clickup');
     }
 
-    public function packageBooted()
-    {
-        //
-    }
-
-    public function packageRegistered()
+    public function packageRegistered(): void
     {
         $this->app->singleton(ClickUpClient::class, function ($app) {
-            return new ClickUpClient(config('clickup.api_key'));
+            /** @var string $string */
+            $string = config('clickup.api_key');
+
+            return new ClickUpClient($string);
         });
     }
 }

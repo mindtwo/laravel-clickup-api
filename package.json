@@ -1,0 +1,31 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "commit": "commit",
+    "prepare": "husky",
+    "release": "concurrently \"husky\" \"node release.js\"",
+    "release-dry": "node release.js --dry-run",
+    "release-local": "concurrently \"husky\" \"node release.js --no-ci\"",
+    "test": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@commitlint/prompt-cli": "^20.1.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.2",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.2.3",
+    "glob": "^11.0.3",
+    "husky": "^9.1.7",
+    "semantic-release": "^25.0.2"
+  },
+  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c",
+  "engines": {
+    "node": ">=22.11.0",
+    "pnpm": ">=10.10.0"
+  }
+}

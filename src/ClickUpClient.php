@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Http\Client\PendingRequest;
@@ -13,8 +15,9 @@ class ClickUpClient
         protected string $apiKey,
         protected string $baseUrl = 'https://api.clickup.com/api/v2'
     ) {
-        $this->client = Http::baseUrl($this->baseUrl)->withHeaders([
-            'Authorization' => $this->apiKey,
-        ]);
+        $this->client = Http::baseUrl($this->baseUrl)
+            ->withHeaders([
+                'Authorization' => $this->apiKey,
+            ]);
     }
 }

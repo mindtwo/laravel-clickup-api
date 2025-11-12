@@ -6,9 +6,7 @@ use Mindtwo\LaravelClickUpApi\ClickUpClient;
 
 class Task
 {
-    public function __construct(protected ClickUpClient $api)
-    {
-    }
+    public function __construct(protected ClickUpClient $api) {}
 
     public function index(int|string $listId, array $data)
     {

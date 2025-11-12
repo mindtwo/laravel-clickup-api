@@ -6,9 +6,7 @@ use Mindtwo\LaravelClickUpApi\ClickUpClient;
 
 class Attachment
 {
-    public function __construct(protected ClickUpClient $api)
-    {
-    }
+    public function __construct(protected ClickUpClient $api) {}
 
     public function create(string $taskId, $data)
     {

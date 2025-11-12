@@ -6,9 +6,7 @@ use Mindtwo\LaravelClickUpApi\ClickUpClient;
 
 class CustomField
 {
-    public function __construct(protected ClickUpClient $api)
-    {
-    }
+    public function __construct(protected ClickUpClient $api) {}
 
     public function show(string $listId)
     {

@@ -38,8 +38,8 @@ class TaskDependency
      * This makes the specified task block another task from starting.
      * Example: Task A blocks Task B (Task B must wait for Task A to finish).
      *
-     * @param  int|string  $taskId  The task that blocks
-     * @param  int|string  $blockedTaskId  The task that is blocked
+     * @param int|string $taskId The task that blocks
+     * @param int|string $blockedTaskId The task that is blocked
      *
      * @throws ConnectionException
      */

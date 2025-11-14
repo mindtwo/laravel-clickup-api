@@ -19,8 +19,6 @@ class Space
      * @param bool $archived Include archived spaces
      *
      * @throws ConnectionException
-     *
-     * @return Response
      */
     public function index(int|string $teamId, bool $archived = false): Response
     {

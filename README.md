@@ -34,10 +34,10 @@ composer require mindtwo/laravel-clickup-api
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-clickup-api-config"
+php artisan vendor:publish --tag="clickup-api-config"
 ```
 
-This is the contents of the published [config file](config/clickup.php).
+This is the contents of the published [config file](config/clickup-api.php).
 
 ## ENV Configuration
 

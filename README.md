@@ -62,6 +62,70 @@ application's requests to ClickUp's API.
 
 ## Usage
 
+This package provides a clean and intuitive Facade interface for interacting with ClickUp's API. All endpoints can be accessed through the `ClickUp` facade, making your code more readable and maintainable.
+
+### Using the Facade
+
+First, import the ClickUp facade at the top of your PHP file:
+
+```php
+use Mindtwo\LaravelClickUpApi\Facades\ClickUpClient as ClickUp;
+```
+
+Now you can access all ClickUp endpoints through the facade:
+
+```php
+// Tasks
+ClickUp::tasks()->create($listId, $taskDetails);
+ClickUp::tasks()->index($listId, $filters);
+ClickUp::tasks()->show($taskId);
+ClickUp::tasks()->update($taskId, $updates);
+ClickUp::tasks()->delete($taskId);
+
+// Spaces
+ClickUp::spaces()->index($teamId);
+ClickUp::spaces()->create($teamId, $spaceDetails);
+
+// Folders
+ClickUp::folders()->index($spaceId);
+ClickUp::folders()->create($spaceId, $folderDetails);
+
+// Lists
+ClickUp::lists()->index($folderId);
+ClickUp::lists()->create($folderId, $listDetails);
+
+// Custom Fields
+ClickUp::customFields()->show($listId);
+ClickUp::customFields()->set($taskId, $fieldId, $value);
+
+// Attachments
+ClickUp::attachments()->create($taskId, $fileData);
+
+// Subtasks
+ClickUp::subtasks()->create($taskId, $subtaskDetails);
+
+// Milestones
+ClickUp::milestones()->create($listId, $milestoneDetails);
+
+// Task Dependencies
+ClickUp::dependencies()->add($taskId, $dependsOn, $dependencyType);
+ClickUp::dependencies()->remove($taskId, $dependsOn, $dependencyType);
+
+// Task Links
+ClickUp::links()->create($taskId, $linksTo);
+ClickUp::links()->remove($taskId, $linksTo);
+```
+
+### Alternative: Using the app() Helper
+
+If you prefer not to use facades, you can still access endpoints using the `app()` helper:
+
+```php
+app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->create($listId, $taskDetails);
+```
+
+However, we recommend using the Facade for cleaner and more readable code.
+
 ### Task Endpoint Usage
 
 The `Task` class within the Laravel ClickUp API package provides a simple
@@ -82,6 +146,12 @@ it:
 
 #### How to Use:
 
+First, import the facade:
+
+```php
+use Mindtwo\LaravelClickUpApi\Facades\ClickUpClient as ClickUp;
+```
+
 1. **Create a Task**: To create a new task within a list, you can use the
    `create` method. Pass the list ID where the task should be created and an
    array of data that specifies the task details.
@@ -93,7 +163,7 @@ it:
        // Add other task details as needed
    ];
 
-   $task = app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->create($listId, $taskDetails);
+   $task = ClickUp::tasks()->create($listId, $taskDetails);
    ```
 
 2. **Get Tasks in a List**: To retrieve tasks within a list, use the `index`
@@ -101,14 +171,14 @@ it:
    the tasks.
 
    ```php
-   $tasks = app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->index($listId, []);
+   $tasks = ClickUp::tasks()->index($listId, []);
    ```
 
 3. **Show Task Details**: To get detailed information about a task, use the
    `show` method with the task ID.
 
    ```php
-   $task = app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->show($taskId);
+   $task = ClickUp::tasks()->show($taskId);
    ```
 
 4. **Update a Task**: To update an existing task, use the `update` method with
@@ -120,14 +190,14 @@ it:
        // Other task details you want to update
    ];
 
-   $updatedTask = app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->update($taskId, $updatedDetails);
+   $updatedTask = ClickUp::tasks()->update($taskId, $updatedDetails);
    ```
 
 5. **Delete a Task**: To delete a task, use the `delete` method with the task
    ID.
 
    ```php
-   $response = app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Task::class)->delete($taskId);
+   $response = ClickUp::tasks()->delete($taskId);
    ```
 
 These examples demonstrate the fundamental operations you can perform on tasks
@@ -153,6 +223,8 @@ Here's a basic example on how to use the `Attachment` endpoint:
 ```php
 <?php
 
+use Mindtwo\LaravelClickUpApi\Facades\ClickUpClient as ClickUp;
+
 // Assuming $taskId holds the ID of the task you want to attach a file to
 // and $data contains the file and other required information as an array
 $taskId = 'your_task_id_here';
@@ -166,7 +238,7 @@ $data = [
 ];
 
 // Creating an attachment to a task
-app(\Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment::class)->create($taskId, $data);
+ClickUp::attachments()->create($taskId, $data);
 ```
 
 This simple interface abstracts away the complexity of dealing with multipart
@@ -188,14 +260,14 @@ Here's a quick guide on how to use the `CustomField` endpoint to fetch custom
 fields:
 
 ```php
-// Import the CustomField class at the top of your PHP file
-use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
+// Import the ClickUp facade at the top of your PHP file
+use Mindtwo\LaravelClickUpApi\Facades\ClickUpClient as ClickUp;
 
 // Assuming you have a list ID, you can retrieve its custom fields like so:
 $listId = 'your_list_id_here'; // Replace with your actual list ID
 
 // Fetch the custom fields for the specified list
-$customFields = app(CustomField::class)->show($listId);
+$customFields = ClickUp::customFields()->show($listId);
 
 // $customFields now contains the response from ClickUp API
 ```

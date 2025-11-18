@@ -20,7 +20,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-clickup-api')
             ->hasCommand(ListCustomFieldsCommand::class)
-            ->hasConfigFile('clickup');
+            ->hasConfigFile();
     }
 
     public function packageRegistered(): void

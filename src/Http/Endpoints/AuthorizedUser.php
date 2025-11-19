@@ -19,6 +19,6 @@ class AuthorizedUser
      */
     public function get(): Response
     {
-        return $this->api->client->asMultipart()->post('/user');
+        return $this->api->client->get('/user');
     }
 }

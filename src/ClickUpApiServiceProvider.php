@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi;
 
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
-use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Folder;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Milestone;

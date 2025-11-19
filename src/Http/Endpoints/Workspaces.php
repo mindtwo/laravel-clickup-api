@@ -14,7 +14,7 @@ class Workspaces
 
     /**
      * View the Workspaces available to the authenticated user.
- *
+     *
      * @throws ConnectionException
      */
     public function get(): Response
@@ -24,7 +24,7 @@ class Workspaces
 
     /**
      * View the used, total, and available member and guest seats for a Workspace.
- *
+     *
      * @throws ConnectionException
      */
     public function seats(string $team_id): Response
@@ -34,7 +34,7 @@ class Workspaces
 
     /**
      * View the current Plan for the specified Workspace.
- *
+     *
      * @throws ConnectionException
      */
     public function plan(string $team_id): Response

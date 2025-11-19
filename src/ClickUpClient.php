@@ -17,6 +17,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Task;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskLink;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
 
 class ClickUpClient
 {
@@ -119,5 +120,13 @@ class ClickUpClient
     public function links(): TaskLink
     {
         return app(TaskLink::class);
+    }
+
+    /**
+     * Access the Workspaces endpoint for managing workspaces.
+     */
+    public function workspaces(): Workspaces
+    {
+        return app(Workspaces::class);
     }
 }

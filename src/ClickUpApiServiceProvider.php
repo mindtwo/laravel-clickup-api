@@ -16,6 +16,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Task;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskLink;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -56,5 +57,6 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $this->app->singleton(TaskDependency::class);
         $this->app->singleton(TaskLink::class);
         $this->app->singleton(AuthorizedUser::class);
+        $this->app->singleton(Workspaces::class);
     }
 }

@@ -17,6 +17,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Task;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskLink;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
 
 /**
  * @method static Task tasks()
@@ -30,6 +31,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
  * @method static Milestone milestones()
  * @method static TaskDependency dependencies()
  * @method static TaskLink links()
+ * @method static Workspaces workspaces()
  *
  * @see BaseClickUpClient
  */

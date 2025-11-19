@@ -6,6 +6,7 @@ namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Folder;
@@ -28,7 +29,16 @@ class ClickUpClient
         $this->client = Http::baseUrl($this->baseUrl)
             ->withHeaders([
                 'Authorization' => $this->apiKey,
+                'Accept' => 'application/json',
             ]);
+    }
+
+    /**
+     * Access the AuthorizedUser endpoint to get details about the authenticated user.
+     */
+    public function authorizedUser(): AuthorizedUser
+    {
+        return app(AuthorizedUser::class);
     }
 
     /**

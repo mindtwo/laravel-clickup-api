@@ -14,6 +14,7 @@ use Mindtwo\LaravelClickUpApi\ClickUpClient as BaseClickUpClient;
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList lists()
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField customFields()
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment attachments()
+ * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser authorizedUser()
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\Subtask subtasks()
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\Milestone milestones()
  * @method static \Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency dependencies()

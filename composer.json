@@ -99,7 +99,7 @@
                 "Mindtwo\\LaravelClickUpApi\\ClickUpApiServiceProvider"
             ],
             "aliases": {
-                "ClickUpClient": "Mindtwo\\LaravelClickUpApi\\ClickUpClient"
+                "ClickUpClient": "Mindtwo\\LaravelClickUpApi\\Facades\\ClickUpClient"
             }
         }
     },

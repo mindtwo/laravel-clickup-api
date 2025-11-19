@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi;
 
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Folder;
@@ -54,5 +55,6 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $this->app->singleton(Milestone::class);
         $this->app->singleton(TaskDependency::class);
         $this->app->singleton(TaskLink::class);
+        $this->app->singleton(AuthorizedUser::class);
     }
 }

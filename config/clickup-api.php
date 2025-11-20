@@ -22,6 +22,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Workspace ID
+    |--------------------------------------------------------------------------
+    |
+    | The default ClickUp Workspace ID to be used for API operations. This will determine
+    | the context in which tasks and other entities are created or managed within
+    |
+    | Default: ''
+    |
+    */
+
+    'default_workspace_id' => (string) env('CLICKUP_WORKSPACE_ID', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | ClickUp Mappings
     |--------------------------------------------------------------------------
     |
@@ -45,4 +59,5 @@ return [
     'mappings' => [
         // ...
     ],
+
 ];

@@ -13,10 +13,12 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Folder;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Milestone;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Space;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Subtask;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Tag;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Task;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskLink;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Views;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
 
 class ClickUpClient
@@ -128,5 +130,21 @@ class ClickUpClient
     public function workspaces(): Workspaces
     {
         return app(Workspaces::class);
+    }
+
+    /**
+     * Access the Tag endpoint for managing task tags.
+     */
+    public function tags(): Tag
+    {
+        return app(Tag::class);
+    }
+
+    /**
+     * Access the Views endpoint for managing views.
+     */
+    public function views(): Views
+    {
+        return app(Views::class);
     }
 }

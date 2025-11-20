@@ -41,7 +41,7 @@ class ListCustomFieldsCommand extends Command
             $list = $this->ask('What is your lists id or mapping key?');
         }
 
-        $key = sprintf('clickup.mappings.%s', $list);
+        $key = sprintf('clickup-api.mappings.%s', $list);
         /** @var int|string $listId */
         $listId = config($key) ?: $list;
 

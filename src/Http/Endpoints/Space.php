@@ -15,13 +15,21 @@ class Space
     /**
      * Get all spaces in a workspace/team.
      *
-     * @param int|string $teamId The workspace/team ID
+     * @param ?int|string $teamId The workspace/team ID
      * @param bool $archived Include archived spaces
      *
      * @throws ConnectionException
      */
-    public function index(int|string $teamId, bool $archived = false): Response
+    public function index(int|string|null $teamId = null, bool $archived = false): Response
     {
+        if (empty($teamId)) {
+            $teamId = config('clickup-api.default_workspace_id');
+        }
+
+        if (empty($teamId)) {
+            throw new \InvalidArgumentException('Team ID must be provided either as a parameter or in the configuration.');
+        }
+
         return $this->api->client->get(sprintf('/team/%s/space', $teamId), [
             'archived' => $archived,
         ]);

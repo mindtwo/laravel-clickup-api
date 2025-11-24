@@ -37,7 +37,6 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
  * @method static Tag tags()
  * @method static Views views()
  *
- *
  * @see BaseClickUpClient
  */
 class ClickUpClient extends Facade

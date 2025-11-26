@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'api_key' => (string) env('CLICKUP_API_KEY', ''),
+    'api_key' => (string) env('MINDTWO_CLICKUP_API_KEY', ''),
 
     /*
     |--------------------------------------------------------------------------
@@ -32,7 +32,24 @@ return [
     |
     */
 
-    'default_workspace_id' => (string) env('CLICKUP_WORKSPACE_ID', ''),
+    'default_workspace_id' => (string) env('MINDTWO_CLICKUP_WORKSPACE_ID', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue API calls
+    |--------------------------------------------------------------------------
+    |
+    | Determines whether API calls to ClickUp should be queued for asynchronous
+    | processing. Enabling this option can help manage rate limits and improve
+    | application performance by offloading API requests to a background queue.
+    |
+    | Default: false
+    |
+    */
+
+    'queue' => (bool) env('MINDTWO_CLICKUP_QUEUE_API_CALLS', false),
+    'queue_connection' => env('MINDTWO_CLICKUP_QUEUE_CONNECTION', env('QUEUE_CONNECTION')),
+    'rate_limit_per_minute' => (int) env('MINDTWO_CLICKUP_RATE_LIMIT_PER_MINUTE', 100),
 
     /*
     |--------------------------------------------------------------------------

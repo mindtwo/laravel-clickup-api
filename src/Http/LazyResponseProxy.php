@@ -6,7 +6,6 @@ namespace Mindtwo\LaravelClickUpApi\Http;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
-use LogicException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
 use SebastianBergmann\Template\RuntimeException;
@@ -98,11 +97,11 @@ class LazyResponseProxy
 
         // Execute the request based on HTTP method
         $this->response = match ($this->method) {
-            'GET' => $client->get($this->endpoint, $this->queryParams),
-            'POST' => $client->post($this->endpoint, $this->body),
-            'PUT' => $client->put($this->endpoint, $this->body),
+            'GET'    => $client->get($this->endpoint, $this->queryParams),
+            'POST'   => $client->post($this->endpoint, $this->body),
+            'PUT'    => $client->put($this->endpoint, $this->body),
             'DELETE' => $client->delete($this->endpoint, $this->queryParams),
-            default => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
+            default  => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
         };
 
         return $this->response;

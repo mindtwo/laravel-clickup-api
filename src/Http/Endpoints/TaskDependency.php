@@ -8,6 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use InvalidArgumentException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
+
 class TaskDependency
 {
     public function __construct(protected ClickUpClient $api) {}

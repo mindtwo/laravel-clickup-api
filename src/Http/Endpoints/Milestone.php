@@ -7,6 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
+
 class Milestone
 {
     public function __construct(protected ClickUpClient $api) {}

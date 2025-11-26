@@ -7,6 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
+
 /**
  * TaskList endpoint for managing ClickUp lists.
  * Named "TaskList" to avoid conflict with PHP's List keyword.

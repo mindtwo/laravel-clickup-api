@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 class Views
 {
     public function __construct(protected ClickUpClient $api) {}
@@ -61,18 +58,15 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function get(int|string $viewId): Response|ClickUpApiCallJob
+    public function get(int|string $viewId): LazyResponseProxy
     {
         $endpoint = sprintf('/view/%s', $viewId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -83,19 +77,16 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function update(int|string $viewId, array $data): Response|ClickUpApiCallJob
+    public function update(int|string $viewId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/view/%s', $viewId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'PUT',
+            body: $data
+        );
     }
 
     /**
@@ -105,18 +96,15 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $viewId): Response|ClickUpApiCallJob
+    public function delete(int|string $viewId): LazyResponseProxy
     {
         $endpoint = sprintf('/view/%s', $viewId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 
     /**
@@ -127,18 +115,15 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function tasks(int|string $viewId, array $params = []): Response|ClickUpApiCallJob
+    public function tasks(int|string $viewId, array $params = []): LazyResponseProxy
     {
         $endpoint = sprintf('/view/%s/task', $viewId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-                queryParams: $params,
-            );
-        }
-
-        return $this->api->client->get($endpoint, $params);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET',
+            queryParams: $params
+        );
     }
 }

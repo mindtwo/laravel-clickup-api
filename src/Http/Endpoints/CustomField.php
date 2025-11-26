@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 
 class CustomField
 {
@@ -21,18 +19,15 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function show(int|string $listId): Response|ClickUpApiCallJob
+    public function show(int|string $listId): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s/field', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -56,19 +51,16 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function setValue(int|string $taskId, string $fieldId, array $data): Response|ClickUpApiCallJob
+    public function setValue(int|string $taskId, string $fieldId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s/field/%s', $taskId, $fieldId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -82,17 +74,14 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function removeValue(int|string $taskId, string $fieldId): Response|ClickUpApiCallJob
+    public function removeValue(int|string $taskId, string $fieldId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s/field/%s', $taskId, $fieldId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 }

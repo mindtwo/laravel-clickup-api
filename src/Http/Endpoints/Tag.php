@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 class Tag
 {
     public function __construct(protected ClickUpClient $api) {}
@@ -21,18 +18,15 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function index(int|string $spaceId): Response|ClickUpApiCallJob
+    public function index(int|string $spaceId): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/tag', $spaceId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -46,7 +40,7 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, array $tagObject): Response|ClickUpApiCallJob
+    public function create(int|string $listId, array $tagObject): LazyResponseProxy
     {
         // Validate immediately (regardless of queue setting)
         if (empty($tagObject['name'])) {
@@ -64,15 +58,12 @@ class Tag
         $endpoint = sprintf('/space/%s/tag', $listId);
         $body = ['tag' => $tagObject];
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $body,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $body);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $body
+        );
     }
 
     /**
@@ -87,20 +78,17 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function update(int|string $spaceId, string $tagName, array $tagObject): Response|ClickUpApiCallJob
+    public function update(int|string $spaceId, string $tagName, array $tagObject): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/tag/%s', $spaceId, $tagName);
         $body = ['tag' => $tagObject];
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $body,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $body);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'PUT',
+            body: $body
+        );
     }
 
     /**
@@ -111,18 +99,15 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $spaceId, string $tagName): Response|ClickUpApiCallJob
+    public function delete(int|string $spaceId, string $tagName): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/tag/%s', $spaceId, $tagName);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 
     /**
@@ -133,7 +118,7 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function addTagToTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response|ClickUpApiCallJob
+    public function addTagToTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): LazyResponseProxy
     {
         if ($customTaskId && empty($teamId)) {
             throw new \InvalidArgumentException('Team ID is required when using a custom task ID.');
@@ -149,19 +134,12 @@ class Tag
             ];
         }
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                queryParams: $queryParams,
-            );
-        }
-
-        if ($customTaskId) {
-            return $this->api->client->withQueryParameters($queryParams)->post($endpoint);
-        }
-
-        return $this->api->client->post($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            queryParams: $queryParams
+        );
     }
 
     /**
@@ -172,7 +150,7 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function removeTagFromTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response|ClickUpApiCallJob
+    public function removeTagFromTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): LazyResponseProxy
     {
         if ($customTaskId && empty($teamId)) {
             throw new \InvalidArgumentException('Team ID is required when using a custom task ID.');
@@ -188,18 +166,11 @@ class Tag
             ];
         }
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-                queryParams: $queryParams,
-            );
-        }
-
-        if ($customTaskId) {
-            return $this->api->client->withQueryParameters($queryParams)->delete($endpoint);
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE',
+            queryParams: $queryParams
+        );
     }
 }

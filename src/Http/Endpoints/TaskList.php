@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 /**
  * TaskList endpoint for managing ClickUp lists.
  * Named "TaskList" to avoid conflict with PHP's List keyword.
@@ -25,18 +22,15 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function index(int|string $folderId): Response|ClickUpApiCallJob
+    public function index(int|string $folderId): LazyResponseProxy
     {
         $endpoint = sprintf('/folder/%s/list', $folderId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -46,18 +40,15 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function indexInSpace(int|string $spaceId): Response|ClickUpApiCallJob
+    public function indexInSpace(int|string $spaceId): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/list', $spaceId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -67,18 +58,15 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function show(int|string $listId): Response|ClickUpApiCallJob
+    public function show(int|string $listId): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -97,21 +85,18 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function create(int|string $parentId, array $data, bool $inFolder = true): Response|ClickUpApiCallJob
+    public function create(int|string $parentId, array $data, bool $inFolder = true): LazyResponseProxy
     {
         $endpoint = $inFolder
             ? sprintf('/folder/%s/list', $parentId)
             : sprintf('/space/%s/list', $parentId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -122,19 +107,16 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function update(int|string $listId, array $data): Response|ClickUpApiCallJob
+    public function update(int|string $listId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'PUT',
+            body: $data
+        );
     }
 
     /**
@@ -144,17 +126,14 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $listId): Response|ClickUpApiCallJob
+    public function delete(int|string $listId): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 }

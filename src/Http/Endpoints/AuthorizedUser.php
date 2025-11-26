@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 
 class AuthorizedUser
 {
@@ -19,17 +17,14 @@ class AuthorizedUser
      *
      * @throws ConnectionException
      */
-    public function get(): Response|ClickUpApiCallJob
+    public function get(): LazyResponseProxy
     {
         $endpoint = '/user';
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 }

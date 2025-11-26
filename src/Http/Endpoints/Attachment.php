@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 
 class Attachment
 {
@@ -24,19 +22,16 @@ class Attachment
      *
      * @throws ConnectionException
      */
-    public function create(int|string $taskId, array $data): Response|ClickUpApiCallJob
+    public function create(int|string $taskId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s/attachment', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-                options: ['multipart' => true],
-            );
-        }
-
-        return $this->api->client->asMultipart()->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data,
+            options: ['multipart' => true]
+        );
     }
 }

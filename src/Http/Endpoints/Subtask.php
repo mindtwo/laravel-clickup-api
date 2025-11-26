@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use InvalidArgumentException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 class Subtask
 {
     public function __construct(protected ClickUpClient $api) {}
@@ -35,7 +32,7 @@ class Subtask
      * @throws ConnectionException
      * @throws InvalidArgumentException
      */
-    public function create(int|string $listId, int|string $parentTaskId, array $data): Response|ClickUpApiCallJob
+    public function create(int|string $listId, int|string $parentTaskId, array $data): LazyResponseProxy
     {
         // Validate that the parent parameter is not already set
         if (isset($data['parent'])) {
@@ -54,16 +51,12 @@ class Subtask
 
         $endpoint = sprintf('/list/%s/task', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        // Create the subtask using the task creation endpoint
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -75,21 +68,17 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function index(int|string $parentTaskId): Response|ClickUpApiCallJob
+    public function index(int|string $parentTaskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $parentTaskId);
         $queryParams = ['include_subtasks' => true];
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-                queryParams: $queryParams,
-            );
-        }
-
-        // Get the parent task which includes subtasks in the response
-        return $this->api->client->get($endpoint, $queryParams);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET',
+            queryParams: $queryParams
+        );
     }
 
     /**
@@ -103,19 +92,16 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function update(int|string $subtaskId, array $data): Response|ClickUpApiCallJob
+    public function update(int|string $subtaskId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $subtaskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'PUT',
+            body: $data
+        );
     }
 
     /**
@@ -128,17 +114,14 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $subtaskId): Response|ClickUpApiCallJob
+    public function delete(int|string $subtaskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $subtaskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 }

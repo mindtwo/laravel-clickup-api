@@ -7,7 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use Symfony\Component\HttpFoundation\Request;
 
 class Task
@@ -22,19 +22,16 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function index(int|string $listId, array $data): Response|ClickUpApiCallJob
+    public function index(int|string $listId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s/task', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-                queryParams: $data,
-            );
-        }
-
-        return $this->api->client->get($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: Request::METHOD_GET,
+            queryParams: $data
+        );
     }
 
     /**
@@ -44,18 +41,15 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function show(int|string $taskId): Response|ClickUpApiCallJob
+    public function show(int|string $taskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: Request::METHOD_GET
+        );
     }
 
     /**
@@ -73,19 +67,16 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, array $data): Response|ClickUpApiCallJob
+    public function create(int|string $listId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/list/%s/task', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: Request::METHOD_POST,
+            body: $data
+        );
     }
 
     /**
@@ -96,19 +87,16 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function update(int|string $taskId, array $data): Response|ClickUpApiCallJob
+    public function update(int|string $taskId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: Request::METHOD_PUT,
+            body: $data
+        );
     }
 
     /**
@@ -118,18 +106,15 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $taskId): Response|ClickUpApiCallJob
+    public function delete(int|string $taskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: Request::METHOD_DELETE
+        );
     }
 
     /**
@@ -145,7 +130,7 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function createMilestone(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response|ClickUpApiCallJob
+    public function createMilestone(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): LazyResponseProxy
     {
         $data = array_merge(
             [

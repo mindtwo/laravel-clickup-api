@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 class Milestone
 {
     public function __construct(protected ClickUpClient $api) {}
@@ -24,18 +21,15 @@ class Milestone
      *
      * @throws ConnectionException
      */
-    public function getCustomTaskTypes(int|string $teamId): Response|ClickUpApiCallJob
+    public function getCustomTaskTypes(int|string $teamId): LazyResponseProxy
     {
         $endpoint = sprintf('/team/%s/custom_item', $teamId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -90,7 +84,7 @@ class Milestone
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response|ClickUpApiCallJob
+    public function create(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): LazyResponseProxy
     {
         $data = array_merge(
             [
@@ -102,14 +96,11 @@ class Milestone
 
         $endpoint = sprintf('/list/%s/task', $listId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 }

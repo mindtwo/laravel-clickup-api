@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use InvalidArgumentException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
-
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 class TaskDependency
 {
     public function __construct(protected ClickUpClient $api) {}
@@ -26,20 +23,17 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function addDependsOn(int|string $taskId, int|string $dependsOnTaskId): Response|ClickUpApiCallJob
+    public function addDependsOn(int|string $taskId, int|string $dependsOnTaskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s/dependency', $taskId);
         $data = ['depends_on' => (string) $dependsOnTaskId];
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -53,20 +47,17 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function addBlocking(int|string $taskId, int|string $blockedTaskId): Response|ClickUpApiCallJob
+    public function addBlocking(int|string $taskId, int|string $blockedTaskId): LazyResponseProxy
     {
         $endpoint = sprintf('/task/%s/dependency', $taskId);
         $data = ['dependency_of' => (string) $blockedTaskId];
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -83,7 +74,7 @@ class TaskDependency
      * @throws InvalidArgumentException
      * @throws ConnectionException
      */
-    public function add(int|string $taskId, array $data): Response|ClickUpApiCallJob
+    public function add(int|string $taskId, array $data): LazyResponseProxy
     {
         // Validate that exactly one of depends_on or dependency_of is provided
         $hasDependsOn = isset($data['depends_on']);
@@ -103,15 +94,12 @@ class TaskDependency
 
         $endpoint = sprintf('/task/%s/dependency', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -126,7 +114,7 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $taskId, array $data): Response|ClickUpApiCallJob
+    public function delete(int|string $taskId, array $data): LazyResponseProxy
     {
         // Build query parameters from data
         $query = [];
@@ -139,14 +127,11 @@ class TaskDependency
 
         $endpoint = sprintf('/task/%s/dependency', $taskId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-                queryParams: $query,
-            );
-        }
-
-        return $this->api->client->delete($endpoint, $query);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE',
+            queryParams: $query
+        );
     }
 }

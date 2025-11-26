@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mindtwo\LaravelClickUpApi\Jobs;
 
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,7 +17,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ClickUpApiCallJob implements ShouldQueue
 {
-    use Dispatchable,
+    use Batchable,
+        Dispatchable,
         InteractsWithQueue,
         Queueable,
         SerializesModels;
@@ -32,11 +34,11 @@ class ClickUpApiCallJob implements ShouldQueue
     public int $backoff = 30;
 
     public function __construct(
-        protected string $endpoint,
-        protected string $method,
-        protected array $body = [],
-        protected array $queryParams = [],
-        protected array $options = [],
+        public string $endpoint,
+        public string $method,
+        public array $body = [],
+        public array $queryParams = [],
+        public array $options = [],
     ) {}
 
     /**

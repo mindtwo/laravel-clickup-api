@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
-use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use Symfony\Component\HttpFoundation\Request;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 
 class Folder
 {
@@ -21,18 +19,15 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function index(int|string $spaceId): Response|ClickUpApiCallJob
+    public function index(int|string $spaceId): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/folder', $spaceId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -42,18 +37,15 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function show(int|string $folderId): Response|ClickUpApiCallJob
+    public function show(int|string $folderId): LazyResponseProxy
     {
         $endpoint = sprintf('/folder/%s', $folderId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_GET,
-            );
-        }
-
-        return $this->api->client->get($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'GET'
+        );
     }
 
     /**
@@ -66,19 +58,16 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function create(int|string $spaceId, array $data): Response|ClickUpApiCallJob
+    public function create(int|string $spaceId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/space/%s/folder', $spaceId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_POST,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->post($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'POST',
+            body: $data
+        );
     }
 
     /**
@@ -89,19 +78,16 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function update(int|string $folderId, array $data): Response|ClickUpApiCallJob
+    public function update(int|string $folderId, array $data): LazyResponseProxy
     {
         $endpoint = sprintf('/folder/%s', $folderId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_PUT,
-                body: $data,
-            );
-        }
-
-        return $this->api->client->put($endpoint, $data);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'PUT',
+            body: $data
+        );
     }
 
     /**
@@ -111,17 +97,14 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $folderId): Response|ClickUpApiCallJob
+    public function delete(int|string $folderId): LazyResponseProxy
     {
         $endpoint = sprintf('/folder/%s', $folderId);
 
-        if (config('clickup-api.queue')) {
-            return new ClickUpApiCallJob(
-                endpoint: $endpoint,
-                method: Request::METHOD_DELETE,
-            );
-        }
-
-        return $this->api->client->delete($endpoint);
+        return new LazyResponseProxy(
+            api: $this->api,
+            endpoint: $endpoint,
+            method: 'DELETE'
+        );
     }
 }

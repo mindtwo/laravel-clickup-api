@@ -64,7 +64,10 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $this->app->singleton(Workspaces::class);
         $this->app->singleton(Views::class);
         $this->app->singleton(Tag::class);
+    }
 
+    public function packageBooted(): void
+    {
         // Add ratelimiter for api call jobs
         RateLimiter::for('clickup-api-jobs', function (object $job) {
             return Limit::perMinute(config('clickup-api.rate_limit_per_min'))->by('clickup-api-jobs');

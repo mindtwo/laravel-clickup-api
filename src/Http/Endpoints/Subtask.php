@@ -8,6 +8,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use InvalidArgumentException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Subtask
 {
@@ -33,7 +35,7 @@ class Subtask
      * @throws ConnectionException
      * @throws InvalidArgumentException
      */
-    public function create(int|string $listId, int|string $parentTaskId, array $data): Response
+    public function create(int|string $listId, int|string $parentTaskId, array $data): Response|ClickUpApiCallJob
     {
         // Validate that the parent parameter is not already set
         if (isset($data['parent'])) {
@@ -50,8 +52,18 @@ class Subtask
         // Add the parent task ID to the data
         $data['parent'] = (string) $parentTaskId;
 
+        $endpoint = sprintf('/list/%s/task', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
         // Create the subtask using the task creation endpoint
-        return $this->api->client->post(sprintf('/list/%s/task', $listId), $data);
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -63,12 +75,21 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function index(int|string $parentTaskId): Response
+    public function index(int|string $parentTaskId): Response|ClickUpApiCallJob
     {
+        $endpoint = sprintf('/task/%s', $parentTaskId);
+        $queryParams = ['include_subtasks' => true];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+                queryParams: $queryParams,
+            );
+        }
+
         // Get the parent task which includes subtasks in the response
-        return $this->api->client->get(sprintf('/task/%s', $parentTaskId), [
-            'include_subtasks' => true,
-        ]);
+        return $this->api->client->get($endpoint, $queryParams);
     }
 
     /**
@@ -82,9 +103,19 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function update(int|string $subtaskId, array $data): Response
+    public function update(int|string $subtaskId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/task/%s', $subtaskId), $data);
+        $endpoint = sprintf('/task/%s', $subtaskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -97,8 +128,17 @@ class Subtask
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $subtaskId): Response
+    public function delete(int|string $subtaskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/task/%s', $subtaskId));
+        $endpoint = sprintf('/task/%s', $subtaskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class CustomField
 {
@@ -19,9 +21,18 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function show(int|string $listId): Response
+    public function show(int|string $listId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/list/%s/field', $listId));
+        $endpoint = sprintf('/list/%s/field', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -45,12 +56,19 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function setValue(int|string $taskId, string $fieldId, array $data): Response
+    public function setValue(int|string $taskId, string $fieldId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(
-            sprintf('/task/%s/field/%s', $taskId, $fieldId),
-            $data
-        );
+        $endpoint = sprintf('/task/%s/field/%s', $taskId, $fieldId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -64,10 +82,17 @@ class CustomField
      *
      * @throws ConnectionException
      */
-    public function removeValue(int|string $taskId, string $fieldId): Response
+    public function removeValue(int|string $taskId, string $fieldId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(
-            sprintf('/task/%s/field/%s', $taskId, $fieldId)
-        );
+        $endpoint = sprintf('/task/%s/field/%s', $taskId, $fieldId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

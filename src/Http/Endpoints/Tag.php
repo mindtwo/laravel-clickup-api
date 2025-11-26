@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Tag
 {
@@ -19,9 +21,18 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function index(int|string $spaceId): Response
+    public function index(int|string $spaceId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/space/%s/tag', $spaceId));
+        $endpoint = sprintf('/space/%s/tag', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -35,8 +46,9 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, array $tagObject): Response
+    public function create(int|string $listId, array $tagObject): Response|ClickUpApiCallJob
     {
+        // Validate immediately (regardless of queue setting)
         if (empty($tagObject['name'])) {
             throw new \InvalidArgumentException('Tag name is required.');
         }
@@ -49,7 +61,18 @@ class Tag
             throw new \InvalidArgumentException('Tag background color (tag_bg) is required.');
         }
 
-        return $this->api->client->post(sprintf('/space/%s/tag', $listId), ['tag' => $tagObject]);
+        $endpoint = sprintf('/space/%s/tag', $listId);
+        $body = ['tag' => $tagObject];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $body,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $body);
     }
 
     /**
@@ -64,9 +87,20 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function update(int|string $spaceId, string $tagName, array $tagObject): Response
+    public function update(int|string $spaceId, string $tagName, array $tagObject): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/space/%s/tag/%s', $spaceId, $tagName), ['tag' => $tagObject]);
+        $endpoint = sprintf('/space/%s/tag/%s', $spaceId, $tagName);
+        $body = ['tag' => $tagObject];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $body,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $body);
     }
 
     /**
@@ -77,9 +111,18 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $spaceId, string $tagName): Response
+    public function delete(int|string $spaceId, string $tagName): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/space/%s/tag/%s', $spaceId, $tagName));
+        $endpoint = sprintf('/space/%s/tag/%s', $spaceId, $tagName);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 
     /**
@@ -90,19 +133,32 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function addTagToTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response
+    public function addTagToTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response|ClickUpApiCallJob
     {
         if ($customTaskId && empty($teamId)) {
             throw new \InvalidArgumentException('Team ID is required when using a custom task ID.');
         }
 
         $endpoint = sprintf('/task/%s/tag/%s', $taskId, $tagName);
+        $queryParams = [];
 
         if ($customTaskId) {
-            return $this->api->client->withQueryParameters([
+            $queryParams = [
                 'custom_task_ids' => true,
                 'team_id'         => $teamId,
-            ])->post($endpoint);
+            ];
+        }
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                queryParams: $queryParams,
+            );
+        }
+
+        if ($customTaskId) {
+            return $this->api->client->withQueryParameters($queryParams)->post($endpoint);
         }
 
         return $this->api->client->post($endpoint);
@@ -116,19 +172,32 @@ class Tag
      *
      * @throws ConnectionException
      */
-    public function removeTagFromTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response
+    public function removeTagFromTask(int|string $taskId, string $tagName, ?bool $customTaskId = null, int|string|null $teamId = null): Response|ClickUpApiCallJob
     {
         if ($customTaskId && empty($teamId)) {
             throw new \InvalidArgumentException('Team ID is required when using a custom task ID.');
         }
 
         $endpoint = sprintf('/task/%s/tag/%s', $taskId, $tagName);
+        $queryParams = [];
 
         if ($customTaskId) {
-            return $this->api->client->withQueryParameters([
+            $queryParams = [
                 'custom_task_ids' => true,
                 'team_id'         => $teamId,
-            ])->delete($endpoint);
+            ];
+        }
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+                queryParams: $queryParams,
+            );
+        }
+
+        if ($customTaskId) {
+            return $this->api->client->withQueryParameters($queryParams)->delete($endpoint);
         }
 
         return $this->api->client->delete($endpoint);

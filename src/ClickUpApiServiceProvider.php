@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mindtwo\LaravelClickUpApi;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
@@ -62,5 +64,10 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $this->app->singleton(Workspaces::class);
         $this->app->singleton(Views::class);
         $this->app->singleton(Tag::class);
+
+        // Add ratelimiter for api call jobs
+        RateLimiter::for('clickup-api-jobs', function (object $job) {
+            return Limit::perMinute(config('clickup-api.rate_limit_per_min'))->by('clickup-api-jobs');
+        });
     }
 }

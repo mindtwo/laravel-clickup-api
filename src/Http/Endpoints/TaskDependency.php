@@ -8,6 +8,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use InvalidArgumentException;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class TaskDependency
 {
@@ -24,12 +26,20 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function addDependsOn(int|string $taskId, int|string $dependsOnTaskId): Response
+    public function addDependsOn(int|string $taskId, int|string $dependsOnTaskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(
-            sprintf('/task/%s/dependency', $taskId),
-            ['depends_on' => (string) $dependsOnTaskId]
-        );
+        $endpoint = sprintf('/task/%s/dependency', $taskId);
+        $data = ['depends_on' => (string) $dependsOnTaskId];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -43,12 +53,20 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function addBlocking(int|string $taskId, int|string $blockedTaskId): Response
+    public function addBlocking(int|string $taskId, int|string $blockedTaskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(
-            sprintf('/task/%s/dependency', $taskId),
-            ['dependency_of' => (string) $blockedTaskId]
-        );
+        $endpoint = sprintf('/task/%s/dependency', $taskId);
+        $data = ['dependency_of' => (string) $blockedTaskId];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -65,7 +83,7 @@ class TaskDependency
      * @throws InvalidArgumentException
      * @throws ConnectionException
      */
-    public function add(int|string $taskId, array $data): Response
+    public function add(int|string $taskId, array $data): Response|ClickUpApiCallJob
     {
         // Validate that exactly one of depends_on or dependency_of is provided
         $hasDependsOn = isset($data['depends_on']);
@@ -83,10 +101,17 @@ class TaskDependency
             );
         }
 
-        return $this->api->client->post(
-            sprintf('/task/%s/dependency', $taskId),
-            $data
-        );
+        $endpoint = sprintf('/task/%s/dependency', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -101,7 +126,7 @@ class TaskDependency
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $taskId, array $data): Response
+    public function delete(int|string $taskId, array $data): Response|ClickUpApiCallJob
     {
         // Build query parameters from data
         $query = [];
@@ -112,9 +137,16 @@ class TaskDependency
             $query['dependency_of'] = $data['dependency_of'];
         }
 
-        return $this->api->client->delete(
-            sprintf('/task/%s/dependency', $taskId),
-            $query
-        );
+        $endpoint = sprintf('/task/%s/dependency', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+                queryParams: $query,
+            );
+        }
+
+        return $this->api->client->delete($endpoint, $query);
     }
 }

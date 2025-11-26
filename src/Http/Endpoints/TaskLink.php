@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class TaskLink
 {
@@ -24,11 +26,18 @@ class TaskLink
      *
      * @throws ConnectionException
      */
-    public function create(int|string $taskId, int|string $linksToTaskId): Response
+    public function create(int|string $taskId, int|string $linksToTaskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(
-            sprintf('/task/%s/link/%s', $taskId, $linksToTaskId)
-        );
+        $endpoint = sprintf('/task/%s/link/%s', $taskId, $linksToTaskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+            );
+        }
+
+        return $this->api->client->post($endpoint);
     }
 
     /**
@@ -41,10 +50,17 @@ class TaskLink
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $taskId, int|string $linksToTaskId): Response
+    public function delete(int|string $taskId, int|string $linksToTaskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(
-            sprintf('/task/%s/link/%s', $taskId, $linksToTaskId)
-        );
+        $endpoint = sprintf('/task/%s/link/%s', $taskId, $linksToTaskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

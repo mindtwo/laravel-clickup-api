@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Milestone
 {
@@ -22,9 +24,18 @@ class Milestone
      *
      * @throws ConnectionException
      */
-    public function getCustomTaskTypes(int|string $teamId): Response
+    public function getCustomTaskTypes(int|string $teamId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/team/%s/custom_item', $teamId));
+        $endpoint = sprintf('/team/%s/custom_item', $teamId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -79,7 +90,7 @@ class Milestone
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response
+    public function create(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response|ClickUpApiCallJob
     {
         $data = array_merge(
             [
@@ -89,6 +100,16 @@ class Milestone
             $additionalData
         );
 
-        return $this->api->client->post(sprintf('/list/%s/task', $listId), $data);
+        $endpoint = sprintf('/list/%s/task', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 }

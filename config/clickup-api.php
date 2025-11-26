@@ -47,8 +47,8 @@ return [
     |
     */
 
-    'queue' => (bool) env('MINDTWO_CLICKUP_QUEUE_API_CALLS', false),
-    'queue_connection' => env('MINDTWO_CLICKUP_QUEUE_CONNECTION', env('QUEUE_CONNECTION')),
+    'queue'                 => (bool) env('MINDTWO_CLICKUP_QUEUE_API_CALLS', false),
+    'queue_connection'      => env('MINDTWO_CLICKUP_QUEUE_CONNECTION', env('QUEUE_CONNECTION')),
     'rate_limit_per_minute' => (int) env('MINDTWO_CLICKUP_RATE_LIMIT_PER_MINUTE', 100),
 
     /*

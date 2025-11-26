@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * TaskList endpoint for managing ClickUp lists.
@@ -23,9 +25,18 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function index(int|string $folderId): Response
+    public function index(int|string $folderId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/folder/%s/list', $folderId));
+        $endpoint = sprintf('/folder/%s/list', $folderId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -35,9 +46,18 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function indexInSpace(int|string $spaceId): Response
+    public function indexInSpace(int|string $spaceId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/space/%s/list', $spaceId));
+        $endpoint = sprintf('/space/%s/list', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -47,9 +67,18 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function show(int|string $listId): Response
+    public function show(int|string $listId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/list/%s', $listId));
+        $endpoint = sprintf('/list/%s', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -68,11 +97,19 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function create(int|string $parentId, array $data, bool $inFolder = true): Response
+    public function create(int|string $parentId, array $data, bool $inFolder = true): Response|ClickUpApiCallJob
     {
         $endpoint = $inFolder
             ? sprintf('/folder/%s/list', $parentId)
             : sprintf('/space/%s/list', $parentId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
 
         return $this->api->client->post($endpoint, $data);
     }
@@ -85,9 +122,19 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function update(int|string $listId, array $data): Response
+    public function update(int|string $listId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/list/%s', $listId), $data);
+        $endpoint = sprintf('/list/%s', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -97,8 +144,17 @@ class TaskList
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $listId): Response
+    public function delete(int|string $listId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/list/%s', $listId));
+        $endpoint = sprintf('/list/%s', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

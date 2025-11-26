@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Folder
 {
@@ -19,9 +21,18 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function index(int|string $spaceId): Response
+    public function index(int|string $spaceId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/space/%s/folder', $spaceId));
+        $endpoint = sprintf('/space/%s/folder', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -31,9 +42,18 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function show(int|string $folderId): Response
+    public function show(int|string $folderId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/folder/%s', $folderId));
+        $endpoint = sprintf('/folder/%s', $folderId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -46,9 +66,19 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function create(int|string $spaceId, array $data): Response
+    public function create(int|string $spaceId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(sprintf('/space/%s/folder', $spaceId), $data);
+        $endpoint = sprintf('/space/%s/folder', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -59,9 +89,19 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function update(int|string $folderId, array $data): Response
+    public function update(int|string $folderId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/folder/%s', $folderId), $data);
+        $endpoint = sprintf('/folder/%s', $folderId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -71,8 +111,17 @@ class Folder
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $folderId): Response
+    public function delete(int|string $folderId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/folder/%s', $folderId));
+        $endpoint = sprintf('/folder/%s', $folderId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

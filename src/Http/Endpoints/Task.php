@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Task
 {
@@ -20,9 +22,19 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function index(int|string $listId, array $data): Response
+    public function index(int|string $listId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/list/%s/task', $listId), $data);
+        $endpoint = sprintf('/list/%s/task', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+                queryParams: $data,
+            );
+        }
+
+        return $this->api->client->get($endpoint, $data);
     }
 
     /**
@@ -32,9 +44,18 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function show(int|string $taskId): Response
+    public function show(int|string $taskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/task/%s', $taskId));
+        $endpoint = sprintf('/task/%s', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -52,9 +73,19 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function create(int|string $listId, array $data): Response
+    public function create(int|string $listId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(sprintf('/list/%s/task', $listId), $data);
+        $endpoint = sprintf('/list/%s/task', $listId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -65,9 +96,19 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function update(int|string $taskId, array $data): Response
+    public function update(int|string $taskId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/task/%s', $taskId), $data);
+        $endpoint = sprintf('/task/%s', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -77,9 +118,18 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $taskId): Response
+    public function delete(int|string $taskId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/task/%s', $taskId));
+        $endpoint = sprintf('/task/%s', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 
     /**
@@ -95,7 +145,7 @@ class Task
      *
      * @throws ConnectionException
      */
-    public function createMilestone(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response
+    public function createMilestone(int|string $listId, string $name, int|string $customTypeId, array $additionalData = []): Response|ClickUpApiCallJob
     {
         $data = array_merge(
             [
@@ -113,6 +163,8 @@ class Task
      *
      * This convenience method retrieves a task and returns its data along with
      * dependencies and linked tasks in a structured format.
+     *
+     * This method is not queable and will always perform a direct API call.
      *
      * @param int|string $taskId The task ID
      *

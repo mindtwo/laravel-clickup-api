@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Views
 {
@@ -59,9 +61,18 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function get(int|string $viewId): Response
+    public function get(int|string $viewId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/view/%s', $viewId));
+        $endpoint = sprintf('/view/%s', $viewId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -72,9 +83,19 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function update(int|string $viewId, array $data): Response
+    public function update(int|string $viewId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/view/%s', $viewId), $data);
+        $endpoint = sprintf('/view/%s', $viewId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -84,9 +105,18 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $viewId): Response
+    public function delete(int|string $viewId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/view/%s', $viewId));
+        $endpoint = sprintf('/view/%s', $viewId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 
     /**
@@ -97,8 +127,18 @@ class Views
      *
      * @throws ConnectionException
      */
-    public function tasks(int|string $viewId, array $params = []): Response
+    public function tasks(int|string $viewId, array $params = []): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/view/%s/task', $viewId), $params);
+        $endpoint = sprintf('/view/%s/task', $viewId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+                queryParams: $params,
+            );
+        }
+
+        return $this->api->client->get($endpoint, $params);
     }
 }

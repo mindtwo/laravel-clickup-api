@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class AuthorizedUser
 {
@@ -17,8 +19,17 @@ class AuthorizedUser
      *
      * @throws ConnectionException
      */
-    public function get(): Response
+    public function get(): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get('/user');
+        $endpoint = '/user';
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 }

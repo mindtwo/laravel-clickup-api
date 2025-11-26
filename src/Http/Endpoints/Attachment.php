@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Attachment
 {
@@ -22,8 +24,19 @@ class Attachment
      *
      * @throws ConnectionException
      */
-    public function create(int|string $taskId, array $data): Response
+    public function create(int|string $taskId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->asMultipart()->post(sprintf('/task/%s/attachment', $taskId), $data);
+        $endpoint = sprintf('/task/%s/attachment', $taskId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+                options: ['multipart' => true],
+            );
+        }
+
+        return $this->api->client->asMultipart()->post($endpoint, $data);
     }
 }

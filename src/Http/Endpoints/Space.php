@@ -7,6 +7,8 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
+use Symfony\Component\HttpFoundation\Request;
 
 class Space
 {
@@ -20,7 +22,7 @@ class Space
      *
      * @throws ConnectionException
      */
-    public function index(int|string|null $teamId = null, bool $archived = false): Response
+    public function index(int|string|null $teamId = null, bool $archived = false): Response|ClickUpApiCallJob
     {
         if (empty($teamId)) {
             $teamId = config('clickup-api.default_workspace_id');
@@ -30,9 +32,18 @@ class Space
             throw new \InvalidArgumentException('Team ID must be provided either as a parameter or in the configuration.');
         }
 
-        return $this->api->client->get(sprintf('/team/%s/space', $teamId), [
-            'archived' => $archived,
-        ]);
+        $endpoint = sprintf('/team/%s/space', $teamId);
+        $queryParams = ['archived' => $archived];
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+                queryParams: $queryParams,
+            );
+        }
+
+        return $this->api->client->get($endpoint, $queryParams);
     }
 
     /**
@@ -42,9 +53,18 @@ class Space
      *
      * @throws ConnectionException
      */
-    public function show(int|string $spaceId): Response
+    public function show(int|string $spaceId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->get(sprintf('/space/%s', $spaceId));
+        $endpoint = sprintf('/space/%s', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_GET,
+            );
+        }
+
+        return $this->api->client->get($endpoint);
     }
 
     /**
@@ -68,9 +88,19 @@ class Space
      *
      * @throws ConnectionException
      */
-    public function create(int|string $teamId, array $data): Response
+    public function create(int|string $teamId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->post(sprintf('/team/%s/space', $teamId), $data);
+        $endpoint = sprintf('/team/%s/space', $teamId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_POST,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->post($endpoint, $data);
     }
 
     /**
@@ -81,9 +111,19 @@ class Space
      *
      * @throws ConnectionException
      */
-    public function update(int|string $spaceId, array $data): Response
+    public function update(int|string $spaceId, array $data): Response|ClickUpApiCallJob
     {
-        return $this->api->client->put(sprintf('/space/%s', $spaceId), $data);
+        $endpoint = sprintf('/space/%s', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_PUT,
+                body: $data,
+            );
+        }
+
+        return $this->api->client->put($endpoint, $data);
     }
 
     /**
@@ -93,8 +133,17 @@ class Space
      *
      * @throws ConnectionException
      */
-    public function delete(int|string $spaceId): Response
+    public function delete(int|string $spaceId): Response|ClickUpApiCallJob
     {
-        return $this->api->client->delete(sprintf('/space/%s', $spaceId));
+        $endpoint = sprintf('/space/%s', $spaceId);
+
+        if (config('clickup-api.queue')) {
+            return new ClickUpApiCallJob(
+                endpoint: $endpoint,
+                method: Request::METHOD_DELETE,
+            );
+        }
+
+        return $this->api->client->delete($endpoint);
     }
 }

@@ -70,7 +70,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
     {
         // Add ratelimiter for api call jobs
         RateLimiter::for('clickup-api-jobs', function (object $job) {
-            return Limit::perMinute(config('clickup-api.rate_limit_per_min'))->by('clickup-api-jobs');
+            return Limit::perMinute(config('clickup-api.rate_limit_per_minute'))->by('clickup-api-jobs');
         });
     }
 }

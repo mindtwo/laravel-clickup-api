@@ -13,6 +13,46 @@ class CustomField
     public function __construct(protected ClickUpClient $api) {}
 
     /**
+     * Create a scope for workspace/team-level custom fields.
+     *
+     * @param int|string $teamId The workspace/team ID
+     */
+    public function forWorkspace(int|string $teamId): CustomFieldsScope
+    {
+        return new CustomFieldsScope($this->api, 'team', $teamId);
+    }
+
+    /**
+     * Create a scope for space-level custom fields.
+     *
+     * @param int|string $spaceId The space ID
+     */
+    public function forSpace(int|string $spaceId): CustomFieldsScope
+    {
+        return new CustomFieldsScope($this->api, 'space', $spaceId);
+    }
+
+    /**
+     * Create a scope for folder-level custom fields.
+     *
+     * @param int|string $folderId The folder ID
+     */
+    public function forFolder(int|string $folderId): CustomFieldsScope
+    {
+        return new CustomFieldsScope($this->api, 'folder', $folderId);
+    }
+
+    /**
+     * Create a scope for list-level custom fields.
+     *
+     * @param int|string $listId The list ID
+     */
+    public function forList(int|string $listId): CustomFieldsScope
+    {
+        return new CustomFieldsScope($this->api, 'list', $listId);
+    }
+
+    /**
      * Get accessible custom fields for a list.
      *
      * @param int|string $listId The list ID

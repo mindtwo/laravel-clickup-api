@@ -27,6 +27,11 @@ class LazyResponseProxy
 
     protected ClickUpApiCallJob $job;
 
+    /**
+     * @var true
+     */
+    private bool $executed = false;
+
     public function __construct(
         protected ClickUpClient $api,
         protected string $endpoint,
@@ -53,6 +58,10 @@ class LazyResponseProxy
      */
     public function getJob(): ClickUpApiCallJob
     {
+        if ($this->executed) {
+            throw new RuntimeException('Cannot retrieve job after API call has been executed. ');
+        }
+
         $this->jobRetrieved = true;
 
         return $this->job;
@@ -76,10 +85,11 @@ class LazyResponseProxy
 
         // Prevent execution if job was already retrieved
         if ($this->jobRetrieved) {
-            throw new RuntimeException(
-                'Cannot execute API call after getJob() has been called. '.
-                'Either use the job for queued execution or access Response methods, but not both.'
-            );
+            throw new RuntimeException('Cannot execute API call after getJob() has been called. ');
+        }
+
+        if ($this->executed) {
+            throw new RuntimeException('Cannot execute API call twice. Please Contact an Administrator, this error should never be thrown.');
         }
 
         // Get the HTTP client
@@ -103,6 +113,8 @@ class LazyResponseProxy
             'DELETE' => $client->delete($this->endpoint, $this->queryParams),
             default  => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
         };
+
+        $this->executed = true;
 
         return $this->response;
     }

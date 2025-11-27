@@ -71,11 +71,11 @@ class ClickUpApiCallJob implements ShouldQueue
 
         // Dispatch event with response data
         ClickUpApiCallCompleted::dispatch(
-            endpoint: $this->endpoint,
-            method: $this->method,
-            response: $response->json() ?? [],
-            statusCode: $response->status(),
-            successful: $response->successful(),
+            $this->endpoint,
+            $this->method,
+            $response->json() ?? [],
+            $response->status(),
+            $response->successful(),
         );
     }
 

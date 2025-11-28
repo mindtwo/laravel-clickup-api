@@ -13,6 +13,9 @@ use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
+use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskCreated;
+use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskDeleted;
+use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskUpdated;
 use Symfony\Component\HttpFoundation\Request;
 
 class ClickUpApiCallJob implements ShouldQueue
@@ -77,6 +80,9 @@ class ClickUpApiCallJob implements ShouldQueue
             $response->status(),
             $response->successful(),
         );
+
+        // Dispatch task-specific events
+        $this->dispatchTaskEvents($response);
     }
 
     /**
@@ -87,5 +93,63 @@ class ClickUpApiCallJob implements ShouldQueue
     public function middleware(): array
     {
         return [new RateLimited('clickup-api-jobs')];
+    }
+
+    /**
+     * Dispatch task-specific events based on endpoint and method.
+     */
+    private function dispatchTaskEvents(\Illuminate\Http\Client\Response $response): void
+    {
+        // Only dispatch task events for successful responses
+        if (! $response->successful()) {
+            return;
+        }
+
+        $responseData = $response->json() ?? [];
+
+        // Task Created: POST /list/{listId}/task
+        if ($this->method === 'POST' && preg_match('#^/list/([^/]+)/task$#', $this->endpoint, $matches)) {
+            $listId = $matches[1];
+            $taskId = $responseData['id'] ?? null;
+
+            if ($taskId) {
+                ClickUpTaskCreated::dispatch(
+                    $listId,
+                    $taskId,
+                    $responseData,
+                    $this->endpoint,
+                    true
+                );
+            }
+
+            return;
+        }
+
+        // Task Updated: PUT /task/{taskId}
+        if ($this->method === 'PUT' && preg_match('#^/task/([^/]+)$#', $this->endpoint, $matches)) {
+            $taskId = $matches[1];
+
+            ClickUpTaskUpdated::dispatch(
+                $taskId,
+                $responseData,
+                $this->endpoint,
+                true
+            );
+
+            return;
+        }
+
+        // Task Deleted: DELETE /task/{taskId}
+        if ($this->method === 'DELETE' && preg_match('#^/task/([^/]+)$#', $this->endpoint, $matches)) {
+            $taskId = $matches[1];
+
+            ClickUpTaskDeleted::dispatch(
+                $taskId,
+                $this->endpoint,
+                true
+            );
+
+            return;
+        }
     }
 }

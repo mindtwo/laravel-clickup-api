@@ -8,6 +8,7 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
@@ -16,6 +17,8 @@ use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskCreated;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskDeleted;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskUpdated;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 
 class ClickUpApiCallJob implements ShouldQueue
@@ -72,6 +75,8 @@ class ClickUpApiCallJob implements ShouldQueue
             default                => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
         };
 
+        $this->validateResponse($response);
+
         // Dispatch event with response data
         ClickUpApiCallCompleted::dispatch(
             $this->endpoint,
@@ -98,7 +103,7 @@ class ClickUpApiCallJob implements ShouldQueue
     /**
      * Dispatch task-specific events based on endpoint and method.
      */
-    private function dispatchTaskEvents(\Illuminate\Http\Client\Response $response): void
+    private function dispatchTaskEvents(Response $response): void
     {
         // Only dispatch task events for successful responses
         if (! $response->successful()) {
@@ -150,6 +155,21 @@ class ClickUpApiCallJob implements ShouldQueue
             );
 
             return;
+        }
+    }
+
+    /**
+     * Validate HTTP response status and throw a runtime exception on failure.
+     *
+     * **Warning:** This method will execute lazy responses, no job retrieval will be possible after calling this.
+     *
+     * @throws RuntimeException
+     */
+    private function validateResponse(Response|LazyResponseProxy $response): void
+    {
+        if ($response->status() !== 200) {
+            $error = $response->json()['err'] ?? 'Unknown error';
+            throw new RuntimeException("ClickUp Api call failed: {$error}");
         }
     }
 }

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClickUpWebhookDelivery extends Model
 {
+    protected $table = 'clickup_webhook_delivery';
+
     protected $fillable = [
         'clickup_webhook_id',
         'event',

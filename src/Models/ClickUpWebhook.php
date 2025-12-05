@@ -12,6 +12,8 @@ class ClickUpWebhook extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'clickup_webhooks';
+
     protected $fillable = [
         'clickup_webhook_id',
         'endpoint',

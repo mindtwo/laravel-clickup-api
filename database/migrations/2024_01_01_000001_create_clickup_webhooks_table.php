@@ -41,7 +41,7 @@ return new class extends Migration
 
             // Indexes
             $table->index('event');
-            //$table->index('status');
+            // $table->index('status');
             $table->index('is_active');
         });
     }

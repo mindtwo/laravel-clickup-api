@@ -136,7 +136,12 @@ class Webhooks
     public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook
     {
         // Execute API call
-        $this->update($webhookId, $data)->execute();
+        $response = $this->update($webhookId, $data);
+
+        if ($response->status() !== 200) {
+            $error = $response->json()['err'] ?? 'Unknown error';
+            throw new RuntimeException("ClickUp Api call failed: {$error}");
+        }
 
         // Find and update local webhook
         $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)->firstOrFail();
@@ -166,7 +171,12 @@ class Webhooks
     public function deleteManaged(int|string $webhookId): bool
     {
         // Execute API call
-        $this->delete($webhookId)->execute();
+        $response = $this->delete($webhookId);
+
+        if ($response->status() !== 200) {
+            $error = $response->json()['err'] ?? 'Unknown error';
+            throw new RuntimeException("ClickUp Api call failed: {$error}");
+        }
 
         // Soft delete from database
         $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)->first();
@@ -184,8 +194,16 @@ class Webhooks
     public function syncFromApi(int|string $workspaceId): Collection
     {
         // Fetch from API
-        $response = $this->index($workspaceId)->execute();
-        $apiWebhooks = $response['webhooks'] ?? [];
+        $response = $this->index($workspaceId);
+
+        if ($response->status() !== 200) {
+            $error = $response->json()['err'] ?? 'Unknown error';
+            throw new RuntimeException("ClickUp Api call failed: {$error}");
+        }
+
+        $responseData = $response->json();
+
+        $apiWebhooks = $responseData['webhooks'] ?? [];
 
         $synced = collect();
 

@@ -110,6 +110,8 @@ class Webhooks
             throw new RuntimeException("ClickUp Api call failed: {$error}");
         }
 
+        $response = $response->json();
+
         // Extract webhook data from response
         $webhookData = $response['webhook'] ?? $response;
 

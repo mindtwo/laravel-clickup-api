@@ -20,7 +20,7 @@ class ClickUpWebhookDelivery extends Model
     ];
 
     protected $casts = [
-        'payload' => 'array',
+        'payload'            => 'array',
         'processing_time_ms' => 'integer',
     ];
 

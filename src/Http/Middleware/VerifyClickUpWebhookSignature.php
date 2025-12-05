@@ -21,7 +21,7 @@ class VerifyClickUpWebhookSignature
 
         if (! $signature) {
             Log::warning('ClickUp webhook signature missing', [
-                'ip' => $request->ip(),
+                'ip'         => $request->ip(),
                 'webhook_id' => $request->input('webhook_id'),
             ]);
 
@@ -45,7 +45,7 @@ class VerifyClickUpWebhookSignature
         if (! $webhook || ! $webhook->secret) {
             Log::warning('ClickUp webhook secret not found', [
                 'webhook_id' => $webhookId,
-                'ip' => $request->ip(),
+                'ip'         => $request->ip(),
             ]);
 
             return response()->json(['error' => 'Invalid webhook'], 401);
@@ -58,7 +58,7 @@ class VerifyClickUpWebhookSignature
         if (! hash_equals($expectedSignature, $signature)) {
             Log::warning('Invalid ClickUp webhook signature', [
                 'webhook_id' => $webhookId,
-                'ip' => $request->ip(),
+                'ip'         => $request->ip(),
             ]);
 
             return response()->json(['error' => 'Invalid signature'], 401);

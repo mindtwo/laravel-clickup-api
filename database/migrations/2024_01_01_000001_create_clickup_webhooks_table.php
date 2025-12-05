@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('endpoint');
             $table->string('event');
             // Clickup does not have a status field for webhooks, delete or implement manual status tracking if needed
-            //$table->string('status')->default('pending');
+            // $table->string('status')->default('pending');
             $table->string('health_status')->default('healthy');
 
             // Webhook targeting (ClickUp's hierarchy filtering)

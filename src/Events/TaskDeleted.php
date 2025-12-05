@@ -15,9 +15,9 @@ class TaskDeleted
     /**
      * Create a new event instance.
      *
-     * @param  array  $payload  The task data payload
-     * @param  EventSource  $source  The source of the event
-     * @param  bool  $successful  Whether the operation was successful
+     * @param array $payload The task data payload
+     * @param EventSource $source The source of the event
+     * @param bool $successful Whether the operation was successful
      */
     public function __construct(
         public array $payload,

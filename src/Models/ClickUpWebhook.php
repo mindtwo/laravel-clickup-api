@@ -30,9 +30,9 @@ class ClickUpWebhook extends Model
 
     protected $casts = [
         'last_triggered_at' => 'datetime',
-        'last_error' => 'array',
-        'is_active' => 'boolean',
-        'total_deliveries' => 'integer',
+        'last_error'        => 'array',
+        'is_active'         => 'boolean',
+        'total_deliveries'  => 'integer',
         'failed_deliveries' => 'integer',
     ];
 
@@ -58,7 +58,7 @@ class ClickUpWebhook extends Model
         $this->increment('failed_deliveries');
         $this->update([
             'last_error' => [
-                'error' => $error,
+                'error'     => $error,
                 'timestamp' => now()->toIso8601String(),
             ],
         ]);
@@ -109,7 +109,7 @@ class ClickUpWebhook extends Model
         $healthStatus = match (true) {
             $recentFailureRate >= 50 => 'failing',
             $recentFailureRate >= 20 => 'degraded',
-            default => 'healthy',
+            default                  => 'healthy',
         };
 
         $this->update(['health_status' => $healthStatus]);

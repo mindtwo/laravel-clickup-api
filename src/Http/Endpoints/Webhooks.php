@@ -14,9 +14,6 @@ class Webhooks
 
     /**
      * View the webhooks created via the API for a Workspace. This endpoint returns webhooks created by the authenticated user.
-     *
-     * @param int|string $workspaceId
-     * @return LazyResponseProxy
      */
     public function index(int|string $workspaceId): LazyResponseProxy
     {
@@ -33,15 +30,13 @@ class Webhooks
      * Set up a webhook to monitor for events.
      * We do not have a dedicated IP address for webhooks.
      *
-     * @param int|string $workspaceId
      * @param array $data Webhook data including:
-     *                      - endpoint (string, required): The URL to send the webhook events to
-     *                      - events (array of strings, required): The events to monitor (e.g taskCreated, taskUpdated)
-     *                      - space_id (int, optional): The ID of the space to monitor
-     *                      - folder_id (int, optional): The ID of the folder to monitor
-     *                      - list_id (int, optional): The ID of the list to monitor
-     *                      - task_id (int, optional): The ID of the task to monitor
-     * @return LazyResponseProxy
+     *                    - endpoint (string, required): The URL to send the webhook events to
+     *                    - events (array of strings, required): The events to monitor (e.g taskCreated, taskUpdated)
+     *                    - space_id (int, optional): The ID of the space to monitor
+     *                    - folder_id (int, optional): The ID of the folder to monitor
+     *                    - list_id (int, optional): The ID of the list to monitor
+     *                    - task_id (int, optional): The ID of the task to monitor
      */
     public function create(int|string $workspaceId, array $data): LazyResponseProxy
     {
@@ -64,13 +59,11 @@ class Webhooks
 
     /**
      * Update a webhook to change the events to be monitored.
- *
-     * @param int|string $webhookId
+     *
      * @param array $data Webhook data including:
-     *                   - endpoint (string, required): The URL to send the webhook events to
-     *                   - events (array of strings, required): The events to monitor (e.g., taskCreated, taskUpdated)
-     *                   - status (string, optional): The webhook status (active or inactive)
-     * @return LazyResponseProxy
+     *                    - endpoint (string, required): The URL to send the webhook events to
+     *                    - events (array of strings, required): The events to monitor (e.g., taskCreated, taskUpdated)
+     *                    - status (string, optional): The webhook status (active or inactive)
      */
     public function update(int|string $webhookId, array $data): LazyResponseProxy
     {
@@ -86,9 +79,6 @@ class Webhooks
 
     /**
      * Delete a webhook.
-     *
-     * @param int|string $webhookId
-     * @return LazyResponseProxy
      */
     public function delete(int|string $webhookId): LazyResponseProxy
     {
@@ -105,8 +95,8 @@ class Webhooks
      * Create a webhook and store it in the database.
      * This method handles both the API call to ClickUp and the local database storage.
      *
-     * @param int|string $workspaceId
      * @param array $data Webhook configuration
+     *
      * @return ClickUpWebhook The created webhook model
      */
     public function createManaged(int|string $workspaceId, array $data): ClickUpWebhook
@@ -123,21 +113,17 @@ class Webhooks
         // Store in database
         return ClickUpWebhook::create([
             'clickup_webhook_id' => $webhookData['id'],
-            'endpoint' => $webhookData['endpoint'] ?? $data['endpoint'],
-            'event' => is_array($data['events']) ? implode(',', $data['events']) : $data['events'],
-            'target_type' => $targetType,
-            'target_id' => $targetId,
-            'secret' => $webhookData['secret'] ?? null,
-            'is_active' => true,
+            'endpoint'           => $webhookData['endpoint'] ?? $data['endpoint'],
+            'event'              => is_array($data['events']) ? implode(',', $data['events']) : $data['events'],
+            'target_type'        => $targetType,
+            'target_id'          => $targetId,
+            'secret'             => $webhookData['secret'] ?? null,
+            'is_active'          => true,
         ]);
     }
 
     /**
      * Update a webhook in ClickUp and sync to database.
-     *
-     * @param int|string $webhookId
-     * @param array $data
-     * @return ClickUpWebhook
      */
     public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook
     {
@@ -159,7 +145,7 @@ class Webhooks
                 : $data['events'];
         }
 
-        if (!empty($updateData)) {
+        if (! empty($updateData)) {
             $webhook->update($updateData);
         }
 
@@ -168,9 +154,6 @@ class Webhooks
 
     /**
      * Delete a webhook from ClickUp and mark as deleted in database.
-     *
-     * @param int|string $webhookId
-     * @return bool
      */
     public function deleteManaged(int|string $webhookId): bool
     {
@@ -189,9 +172,6 @@ class Webhooks
 
     /**
      * Fetch webhooks from ClickUp API and sync with database.
-     *
-     * @param int|string $workspaceId
-     * @return Collection
      */
     public function syncFromApi(int|string $workspaceId): Collection
     {
@@ -209,12 +189,12 @@ class Webhooks
                 ['clickup_webhook_id' => $apiWebhook['id']],
                 [
                     'endpoint' => $apiWebhook['endpoint'],
-                    'event' => is_array($apiWebhook['events'])
+                    'event'    => is_array($apiWebhook['events'])
                         ? implode(',', $apiWebhook['events'])
                         : ($apiWebhook['events'][0] ?? '*'),
                     'target_type' => $targetType,
-                    'target_id' => $targetId,
-                    'is_active' => ($apiWebhook['status'] ?? 'active') === 'active',
+                    'target_id'   => $targetId,
+                    'is_active'   => ($apiWebhook['status'] ?? 'active') === 'active',
                 ]
             );
 
@@ -227,8 +207,6 @@ class Webhooks
     /**
      * Determine the target type and ID from webhook data.
      *
-     * @param int|string $workspaceId
-     * @param array $data
      * @return array [targetType, targetId]
      */
     private function determineTarget(int|string $workspaceId, array $data): array

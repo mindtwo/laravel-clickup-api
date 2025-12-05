@@ -77,4 +77,25 @@ return [
         // ...
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for ClickUp webhook handling. This enables your
+    | application to receive and process webhook events from ClickUp.
+    |
+    */
+
+    'webhook' => [
+        // Enable or disable webhook functionality
+        'enabled' => (bool) env('MINDTWO_CLICKUP_WEBHOOK_ENABLED', true),
+
+        // The URL path where webhooks will be received
+        'path' => env('MINDTWO_CLICKUP_WEBHOOK_PATH', '/webhooks/clickup'),
+
+        // Middleware to apply to the webhook route
+        'middleware' => ['api'],
+    ],
+
 ];

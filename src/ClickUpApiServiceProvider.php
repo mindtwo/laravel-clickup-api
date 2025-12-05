@@ -6,7 +6,10 @@ namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
+use Mindtwo\LaravelClickUpApi\Http\Controllers\WebhookController;
+use Mindtwo\LaravelClickUpApi\Http\Middleware\VerifyClickUpWebhookSignature;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
@@ -74,5 +77,30 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         RateLimiter::for('clickup-api-jobs', function (object $job) {
             return Limit::perMinute(config('clickup-api.rate_limit_per_minute'))->by('clickup-api-jobs');
         });
+
+        // Register webhook routes
+        if (config('clickup-api.webhook.enabled', true)) {
+            $this->registerWebhookRoutes();
+        }
+
+        // Publish migrations
+        $this->publishes([
+            __DIR__.'/../database/migrations' => database_path('migrations'),
+        ], 'clickup-migrations');
+    }
+
+    /**
+     * Register the webhook routes.
+     */
+    protected function registerWebhookRoutes(): void
+    {
+        Route::middleware(config('clickup-api.webhook.middleware', ['api']))
+            ->group(function () {
+                Route::post(
+                    config('clickup-api.webhook.path', '/webhooks/clickup'),
+                    [WebhookController::class, 'handle']
+                )->middleware(VerifyClickUpWebhookSignature::class)
+                    ->name('clickup.webhooks.handle');
+            });
     }
 }

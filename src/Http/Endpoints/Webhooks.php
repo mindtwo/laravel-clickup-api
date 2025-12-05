@@ -2,8 +2,10 @@
 
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
+use Illuminate\Support\Collection;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
+use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
 use Symfony\Component\HttpFoundation\Request;
 
 class Webhooks
@@ -43,6 +45,13 @@ class Webhooks
      */
     public function create(int|string $workspaceId, array $data): LazyResponseProxy
     {
+        // Auto-set endpoint URL if not provided
+        if (! isset($data['endpoint'])) {
+            $appUrl = rtrim(config('app.url'), '/');
+            $webhookPath = config('clickup-api.webhook.path', '/webhooks/clickup');
+            $data['endpoint'] = $appUrl.$webhookPath;
+        }
+
         $endpoint = sprintf('/team/%s/webhook', $workspaceId);
 
         return new LazyResponseProxy(
@@ -90,5 +99,156 @@ class Webhooks
             endpoint: $endpoint,
             method: Request::METHOD_DELETE
         );
+    }
+
+    /**
+     * Create a webhook and store it in the database.
+     * This method handles both the API call to ClickUp and the local database storage.
+     *
+     * @param int|string $workspaceId
+     * @param array $data Webhook configuration
+     * @return ClickUpWebhook The created webhook model
+     */
+    public function createManaged(int|string $workspaceId, array $data): ClickUpWebhook
+    {
+        // Execute API call
+        $response = $this->create($workspaceId, $data)->execute();
+
+        // Extract webhook data from response
+        $webhookData = $response['webhook'] ?? $response;
+
+        // Determine target type and ID
+        [$targetType, $targetId] = $this->determineTarget($workspaceId, $data);
+
+        // Store in database
+        return ClickUpWebhook::create([
+            'clickup_webhook_id' => $webhookData['id'],
+            'endpoint' => $webhookData['endpoint'] ?? $data['endpoint'],
+            'event' => is_array($data['events']) ? implode(',', $data['events']) : $data['events'],
+            'target_type' => $targetType,
+            'target_id' => $targetId,
+            'secret' => $webhookData['secret'] ?? null,
+            'is_active' => true,
+        ]);
+    }
+
+    /**
+     * Update a webhook in ClickUp and sync to database.
+     *
+     * @param int|string $webhookId
+     * @param array $data
+     * @return ClickUpWebhook
+     */
+    public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook
+    {
+        // Execute API call
+        $this->update($webhookId, $data)->execute();
+
+        // Find and update local webhook
+        $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)->firstOrFail();
+
+        $updateData = [];
+
+        if (isset($data['endpoint'])) {
+            $updateData['endpoint'] = $data['endpoint'];
+        }
+
+        if (isset($data['events'])) {
+            $updateData['event'] = is_array($data['events'])
+                ? implode(',', $data['events'])
+                : $data['events'];
+        }
+
+        if (!empty($updateData)) {
+            $webhook->update($updateData);
+        }
+
+        return $webhook->fresh();
+    }
+
+    /**
+     * Delete a webhook from ClickUp and mark as deleted in database.
+     *
+     * @param int|string $webhookId
+     * @return bool
+     */
+    public function deleteManaged(int|string $webhookId): bool
+    {
+        // Execute API call
+        $this->delete($webhookId)->execute();
+
+        // Soft delete from database
+        $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)->first();
+
+        if ($webhook) {
+            $webhook->delete();
+        }
+
+        return true;
+    }
+
+    /**
+     * Fetch webhooks from ClickUp API and sync with database.
+     *
+     * @param int|string $workspaceId
+     * @return Collection
+     */
+    public function syncFromApi(int|string $workspaceId): Collection
+    {
+        // Fetch from API
+        $response = $this->index($workspaceId)->execute();
+        $apiWebhooks = $response['webhooks'] ?? [];
+
+        $synced = collect();
+
+        foreach ($apiWebhooks as $apiWebhook) {
+            // Determine target from API webhook data
+            [$targetType, $targetId] = $this->determineTarget($workspaceId, $apiWebhook);
+
+            $webhook = ClickUpWebhook::updateOrCreate(
+                ['clickup_webhook_id' => $apiWebhook['id']],
+                [
+                    'endpoint' => $apiWebhook['endpoint'],
+                    'event' => is_array($apiWebhook['events'])
+                        ? implode(',', $apiWebhook['events'])
+                        : ($apiWebhook['events'][0] ?? '*'),
+                    'target_type' => $targetType,
+                    'target_id' => $targetId,
+                    'is_active' => ($apiWebhook['status'] ?? 'active') === 'active',
+                ]
+            );
+
+            $synced->push($webhook);
+        }
+
+        return $synced;
+    }
+
+    /**
+     * Determine the target type and ID from webhook data.
+     *
+     * @param int|string $workspaceId
+     * @param array $data
+     * @return array [targetType, targetId]
+     */
+    private function determineTarget(int|string $workspaceId, array $data): array
+    {
+        if (isset($data['task_id'])) {
+            return ['task', (string) $data['task_id']];
+        }
+
+        if (isset($data['list_id'])) {
+            return ['list', (string) $data['list_id']];
+        }
+
+        if (isset($data['folder_id'])) {
+            return ['folder', (string) $data['folder_id']];
+        }
+
+        if (isset($data['space_id'])) {
+            return ['space', (string) $data['space_id']];
+        }
+
+        return ['workspace', (string) $workspaceId];
     }
 }

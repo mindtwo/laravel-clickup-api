@@ -13,10 +13,11 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Enums\EventSource;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
-use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskCreated;
-use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskDeleted;
-use Mindtwo\LaravelClickUpApi\Events\ClickUpTaskUpdated;
+use Mindtwo\LaravelClickUpApi\Events\TaskCreated;
+use Mindtwo\LaravelClickUpApi\Events\TaskDeleted;
+use Mindtwo\LaravelClickUpApi\Events\TaskUpdated;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
@@ -114,15 +115,10 @@ class ClickUpApiCallJob implements ShouldQueue
 
         // Task Created: POST /list/{listId}/task
         if ($this->method === 'POST' && preg_match('#^/list/([^/]+)/task$#', $this->endpoint, $matches)) {
-            $listId = $matches[1];
-            $taskId = $responseData['id'] ?? null;
-
-            if ($taskId) {
-                ClickUpTaskCreated::dispatch(
-                    $listId,
-                    $taskId,
+            if (isset($responseData['id'])) {
+                TaskCreated::dispatch(
                     $responseData,
-                    $this->endpoint,
+                    EventSource::API,
                     true
                 );
             }
@@ -132,12 +128,9 @@ class ClickUpApiCallJob implements ShouldQueue
 
         // Task Updated: PUT /task/{taskId}
         if ($this->method === 'PUT' && preg_match('#^/task/([^/]+)$#', $this->endpoint, $matches)) {
-            $taskId = $matches[1];
-
-            ClickUpTaskUpdated::dispatch(
-                $taskId,
+            TaskUpdated::dispatch(
                 $responseData,
-                $this->endpoint,
+                EventSource::API,
                 true
             );
 
@@ -148,9 +141,9 @@ class ClickUpApiCallJob implements ShouldQueue
         if ($this->method === 'DELETE' && preg_match('#^/task/([^/]+)$#', $this->endpoint, $matches)) {
             $taskId = $matches[1];
 
-            ClickUpTaskDeleted::dispatch(
-                $taskId,
-                $this->endpoint,
+            TaskDeleted::dispatch(
+                ['id' => $taskId],
+                EventSource::API,
                 true
             );
 

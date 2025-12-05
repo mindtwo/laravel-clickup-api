@@ -19,6 +19,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskDependency;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskLink;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Views;
+use Mindtwo\LaravelClickUpApi\Http\Endpoints\Webhooks;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
 
 /**
@@ -34,6 +35,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
  * @method static TaskDependency dependencies()
  * @method static TaskLink links()
  * @method static Workspaces workspaces()
+ * @method static Webhooks webhooks()
  * @method static Tag tags()
  * @method static Views views()
  *

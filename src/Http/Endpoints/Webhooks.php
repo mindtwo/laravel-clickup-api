@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 
 class Webhooks
@@ -102,7 +103,12 @@ class Webhooks
     public function createManaged(int|string $workspaceId, array $data): ClickUpWebhook
     {
         // Execute API call
-        $response = $this->create($workspaceId, $data)->execute();
+        $response = $this->create($workspaceId, $data);
+
+        if ($response->status() !== 200) {
+            $error = $response->json()['err'] ?? 'Unknown error';
+            throw new RuntimeException("ClickUp Api call failed: {$error}");
+        }
 
         // Extract webhook data from response
         $webhookData = $response['webhook'] ?? $response;

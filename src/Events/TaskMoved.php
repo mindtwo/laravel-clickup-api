@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Mindtwo\LaravelClickUpApi\Events;
 
+use Mindtwo\LaravelClickUpApi\Traits\HandlesTask;
+
 class TaskMoved extends ClickUpEvent
 {
-    public function getTaskId(): string|int
-    {
-        return $this->payload['task_id'];
-    }
+    use HandlesTask;
 }

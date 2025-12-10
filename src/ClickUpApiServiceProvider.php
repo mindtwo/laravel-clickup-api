@@ -94,13 +94,6 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
      */
     protected function registerWebhookRoutes(): void
     {
-        Route::middleware(config('clickup-api.webhook.middleware', ['api']))
-            ->group(function () {
-                Route::post(
-                    config('clickup-api.webhook.path', '/webhooks/clickup'),
-                    [WebhookController::class, 'handle']
-                )->middleware(VerifyClickUpWebhookSignature::class)
-                    ->name('clickup.webhooks.handle');
-            });
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
     }
 }

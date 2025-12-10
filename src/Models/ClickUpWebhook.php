@@ -38,9 +38,12 @@ class ClickUpWebhook extends Model
         'failed_deliveries' => 'integer',
     ];
 
+    /**
+     * @return HasMany<ClickUpWebhookDelivery, $this>
+     */
     public function deliveries(): HasMany
     {
-        return $this->hasMany(ClickUpWebhookDelivery::class);
+        return $this->hasMany(ClickUpWebhookDelivery::class, 'clickup_webhook_id', 'id');
     }
 
     /**

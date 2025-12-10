@@ -6,9 +6,7 @@ namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
-use Mindtwo\LaravelClickUpApi\Http\Controllers\WebhookController;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
@@ -24,7 +22,6 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Views;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Webhooks;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
-use Mindtwo\LaravelClickUpApi\Http\Middleware\VerifyClickUpWebhookSignature;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

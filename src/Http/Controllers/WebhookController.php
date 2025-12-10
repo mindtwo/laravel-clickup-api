@@ -48,77 +48,88 @@ class WebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
-        $startTime = now();
+        try {
+            $startTime = now();
 
-        // Extract webhook data
-        $webhookId = $request->input('webhook_id');
-        $event = $request->input('event');
-        $historyItems = $request->input('history_items', []);
+            // Extract webhook data
+            $webhookId = $request->input('webhook_id');
+            $event = $request->input('event');
+            $historyItems = $request->input('history_items', []);
 
-        // Generate idempotency key using webhook_id and history_item_id
-        $idempotencyKey = $webhookId.':'.($historyItems[0]['id'] ?? uniqid(more_entropy: true));
+            // Generate idempotency key using webhook_id and history_item_id
+            $idempotencyKey = $webhookId.':'.($historyItems[0]['id'] ?? uniqid(more_entropy: true));
 
-        // Check for duplicate delivery
-        if (ClickUpWebhookDelivery::where('idempotency_key', $idempotencyKey)->exists()) {
-            Log::info('Duplicate ClickUp webhook delivery detected', [
-                'webhook_id'      => $webhookId,
+            // Check for duplicate delivery
+            if (ClickUpWebhookDelivery::where('idempotency_key', $idempotencyKey)->exists()) {
+                Log::info('Duplicate ClickUp webhook delivery detected', [
+                    'webhook_id'      => $webhookId,
+                    'event'           => $event,
+                    'idempotency_key' => $idempotencyKey,
+                ]);
+
+                return response()->json(['status' => 'duplicate'], 200);
+            }
+
+            // Find webhook configuration
+            $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $webhook) {
+                Log::warning('ClickUp webhook not found or inactive', [
+                    'webhook_id' => $webhookId,
+                    'event'      => $event,
+                ]);
+
+                return response()->json(['status' => 'webhook_not_found'], 404);
+            }
+
+            // Record delivery
+            $delivery = $webhook->deliveries()->create([
                 'event'           => $event,
+                'payload'         => $request->all(),
+                'status'          => 'received',
                 'idempotency_key' => $idempotencyKey,
             ]);
 
-            return response()->json(['status' => 'duplicate'], 200);
-        }
+            try {
+                // Dispatch event
+                $this->dispatchEvent($event, $request->all());
 
-        // Find webhook configuration
-        $webhook = ClickUpWebhook::where('clickup_webhook_id', $webhookId)
-            ->where('is_active', true)
-            ->first();
+                // Update delivery status
+                $processingTime = now()->diffInMilliseconds($startTime);
+                $delivery->update([
+                    'status'             => 'processed',
+                    'processing_time_ms' => $processingTime,
+                ]);
 
-        if (! $webhook) {
-            Log::warning('ClickUp webhook not found or inactive', [
-                'webhook_id' => $webhookId,
-                'event'      => $event,
-            ]);
+                $webhook->recordDelivery();
 
-            return response()->json(['status' => 'webhook_not_found'], 404);
-        }
+                return response()->json(['status' => 'success'], 200);
+            } catch (Exception $e) {
+                $delivery->update([
+                    'status'        => 'failed',
+                    'error_message' => $e->getMessage(),
+                ]);
 
-        // Record delivery
-        $delivery = ClickUpWebhookDelivery::create([
-            'clickup_webhook_id' => $webhook->id,
-            'event'              => $event,
-            'payload'            => $request->all(),
-            'status'             => 'received',
-            'idempotency_key'    => $idempotencyKey,
-        ]);
+                $webhook->recordFailure($e->getMessage());
 
-        try {
-            // Dispatch event
-            $this->dispatchEvent($event, $request->all());
+                Log::error('ClickUp webhook processing failed', [
+                    'webhook_id' => $webhookId,
+                    'event'      => $event,
+                    'error'      => $e->getMessage(),
+                    'trace'      => $e->getTraceAsString(),
+                ]);
 
-            // Update delivery status
-            $processingTime = now()->diffInMilliseconds($startTime);
-            $delivery->update([
-                'status'             => 'processed',
-                'processing_time_ms' => $processingTime,
-            ]);
-
-            $webhook->recordDelivery();
-
-            return response()->json(['status' => 'success'], 200);
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
         } catch (Exception $e) {
-            $delivery->update([
-                'status'        => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
-
-            $webhook->recordFailure($e->getMessage());
-
-            Log::error('ClickUp webhook processing failed', [
-                'webhook_id' => $webhookId,
-                'event'      => $event,
-                'error'      => $e->getMessage(),
-                'trace'      => $e->getTraceAsString(),
+            Log::error('ClickUp webhook handling failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([

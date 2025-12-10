@@ -4,6 +4,4 @@ declare(strict_types=1);
 
 namespace Mindtwo\LaravelClickUpApi\Events;
 
-class GoalUpdated extends ClickUpEvent
-{
-}
+class GoalUpdated extends ClickUpEvent {}

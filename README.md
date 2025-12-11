@@ -39,6 +39,17 @@ php artisan vendor:publish --tag="clickup-api-config"
 
 This is the contents of the published [config file](config/clickup-api.php).
 
+You must publish and run the package migrations:
+
+```bash
+php artisan vendor:publish --tag="clickup-api-migrations"
+php artisan migrate
+```
+
+The migrations will create the necessary database tables for managing ClickUp webhooks, including:
+- `clickup_webhooks` - Stores webhook registrations and health status
+- `clickup_webhook_deliveries` - Tracks webhook delivery history
+
 ## ENV Configuration
 
 To ensure the proper functioning of this Laravel package with ClickUp, you must

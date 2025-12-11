@@ -89,7 +89,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         // Publish migrations
         $this->publishes([
             __DIR__.'/../database/migrations' => database_path('migrations'),
-        ], 'clickup-migrations');
+        ], 'clickup-api-migrations');
     }
 
     /**

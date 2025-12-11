@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
@@ -80,6 +81,9 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
             $this->registerWebhookRoutes();
         }
 
+        // Register event logging listener
+        $this->registerEventLogging();
+
         // Publish migrations
         $this->publishes([
             __DIR__.'/../database/migrations' => database_path('migrations'),
@@ -92,5 +96,21 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
     protected function registerWebhookRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+    }
+
+    /**
+     * Register the event logging listener.
+     */
+    protected function registerEventLogging(): void
+    {
+        // Only register if logging is enabled
+        if (! config('clickup-api.logging.enabled', false)) {
+            return;
+        }
+
+        Event::listen(
+            Events\ClickUpEvent::class,
+            Listeners\LogClickUpEvent::class
+        );
     }
 }

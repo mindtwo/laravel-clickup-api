@@ -98,4 +98,29 @@ return [
         'middleware' => ['api'],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Event Logging Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Controls logging behavior for ClickUp events. When enabled, all events
+    | extending ClickUpEvent will be automatically logged with their source,
+    | event type, and relevant context data.
+    |
+    */
+
+    'logging' => [
+        // Enable or disable event logging
+        'enabled' => (bool) env('MINDTWO_CLICKUP_LOG_EVENTS', false),
+
+        // Log level to use (debug, info, notice, warning, error)
+        'level' => env('MINDTWO_CLICKUP_LOG_LEVEL', 'info'),
+
+        // Log channel to use (null = default channel)
+        'channel' => env('MINDTWO_CLICKUP_LOG_CHANNEL', null),
+
+        // Include full payload in logs (can be verbose)
+        'include_payload' => (bool) env('MINDTWO_CLICKUP_LOG_INCLUDE_PAYLOAD', false),
+    ],
+
 ];

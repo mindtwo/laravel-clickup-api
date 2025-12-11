@@ -8,6 +8,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
+use Mindtwo\LaravelClickUpApi\Commands\RecoverWebhookCommand;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
@@ -38,6 +39,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-clickup-api')
             ->hasCommand(ListCustomFieldsCommand::class)
+            ->hasCommand(RecoverWebhookCommand::class)
             ->hasConfigFile();
     }
 

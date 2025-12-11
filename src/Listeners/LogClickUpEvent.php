@@ -130,7 +130,7 @@ class LogClickUpEvent
     protected function formatSource(EventSource $source): string
     {
         return match ($source) {
-            EventSource::API => 'API',
+            EventSource::API     => 'API',
             EventSource::WEBHOOK => 'Webhook',
         };
     }

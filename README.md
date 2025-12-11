@@ -291,6 +291,78 @@ to guests, and whether the field is required. The command outputs this
 information in a well-organized table format, making it easy to read and analyze
 directly from the terminal.
 
+## Webhook Health Monitoring
+
+This package includes automatic webhook health monitoring to ensure your ClickUp webhooks remain active and functional. The system periodically checks the health status of all registered webhooks and takes appropriate actions when issues are detected.
+
+### Health Status
+
+ClickUp webhooks can have three health statuses:
+
+- **Active**: Webhook is healthy and receiving events
+- **Failing**: Webhook returns unsuccessful HTTP codes or exceeds 7 seconds response time
+- **Suspended**: Webhook has reached 100 failed events and no longer receives events from ClickUp
+
+### Automatic Health Checks
+
+To enable automatic health monitoring, add the following to your application's `app/Console/Kernel.php`:
+
+```php
+protected function schedule(Schedule $schedule): void
+{
+    // Check ClickUp webhook health every hour
+    $schedule->job(\Mindtwo\LaravelClickUpApi\Jobs\CheckWebhookHealth::class)
+        ->hourly()
+        ->name('clickup-webhook-health-check')
+        ->withoutOverlapping();
+}
+```
+
+The health check job will:
+- Query the ClickUp API to fetch current webhook health status
+- Sync health data (status and fail count) to your local database
+- Log warnings when webhook status changes
+- Automatically disable webhooks that become failing or suspended
+
+### Manual Webhook Recovery
+
+If a webhook becomes failing or suspended, you can manually recover it using the recovery command:
+
+**Recover a single webhook:**
+```bash
+php artisan clickup:webhook-recover {webhook_id}
+```
+
+**Recover all failed/suspended webhooks:**
+```bash
+php artisan clickup:webhook-recover --all
+```
+
+The recovery command will:
+- Reactivate the webhook via ClickUp API by setting its status to active
+- Reset the fail count to 0
+- Enable the webhook in your local database
+- Provide console feedback on success or failure
+
+**Example output:**
+```
+Found 2 webhook(s) to recover.
+
+Attempting to recover webhook: wh_abc123
+  Status: failing
+  Endpoint: https://your-app.com/webhooks/clickup
+  Fail count: 45
+  ✓ Successfully recovered webhook wh_abc123
+
+Attempting to recover webhook: wh_def456
+  Status: suspended
+  Endpoint: https://your-app.com/webhooks/clickup
+  Fail count: 100
+  ✓ Successfully recovered webhook wh_def456
+
+Recovery complete: 2 successful, 0 failed
+```
+
 ## Testing
 
 ```bash

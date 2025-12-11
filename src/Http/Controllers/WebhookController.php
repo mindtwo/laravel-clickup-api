@@ -48,9 +48,6 @@ class WebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
-        //TODO Remove this line after debugging
-        Log::debug('Received ClickUp webhook', ['payload' => $request->all()]);
-
         try {
             $startTime = now();
 

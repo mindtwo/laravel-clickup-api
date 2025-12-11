@@ -4,6 +4,7 @@ namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Support\Collection;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
 use RuntimeException;
@@ -218,9 +219,12 @@ class Webhooks
                     'event'    => is_array($apiWebhook['events'])
                         ? implode(',', $apiWebhook['events'])
                         : ($apiWebhook['events'][0] ?? '*'),
-                    'target_type' => $targetType,
-                    'target_id'   => $targetId,
-                    'is_active'   => ($apiWebhook['status'] ?? 'active') === 'active',
+                    'target_type'       => $targetType,
+                    'target_id'         => $targetId,
+                    'is_active'         => ($apiWebhook['health']['status'] ?? 'active') === 'active',
+                    'health_status'     => WebhookHealthStatus::from($apiWebhook['health']['status'] ?? 'active'),
+                    'fail_count'        => $apiWebhook['health']['fail_count'] ?? 0,
+                    'health_checked_at' => now(),
                 ]
             );
 

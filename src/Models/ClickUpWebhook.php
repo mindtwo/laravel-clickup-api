@@ -7,6 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
 
 class ClickUpWebhook extends Model
 {
@@ -20,6 +21,8 @@ class ClickUpWebhook extends Model
         'event',
         'status',
         'health_status',
+        'fail_count',
+        'health_checked_at',
         'target_type',
         'target_id',
         'secret',
@@ -32,10 +35,13 @@ class ClickUpWebhook extends Model
 
     protected $casts = [
         'last_triggered_at' => 'datetime',
+        'health_checked_at' => 'datetime',
+        'health_status'     => WebhookHealthStatus::class,
         'last_error'        => 'array',
         'is_active'         => 'boolean',
         'total_deliveries'  => 'integer',
         'failed_deliveries' => 'integer',
+        'fail_count'        => 'integer',
     ];
 
     /**
@@ -82,15 +88,17 @@ class ClickUpWebhook extends Model
     }
 
     /**
-     * Check if this webhook is healthy.
+     * Check if this webhook is healthy (active status from ClickUp).
      */
     public function isHealthy(): bool
     {
-        return $this->health_status === 'healthy';
+        return $this->health_status === WebhookHealthStatus::ACTIVE;
     }
 
     /**
      * Update the health status based on recent deliveries.
+     * Note: This uses local calculation. The CheckWebhookHealth job
+     * will sync the authoritative status from ClickUp API.
      */
     public function updateHealthStatus(): void
     {
@@ -104,19 +112,54 @@ class ClickUpWebhook extends Model
             ->count();
 
         if ($recentTotal === 0) {
-            $this->update(['health_status' => 'healthy']);
+            $this->update(['health_status' => WebhookHealthStatus::ACTIVE]);
 
             return;
         }
 
         $recentFailureRate = ($recentFailures / $recentTotal) * 100;
 
+        // Use ClickUp's status values: active, failing, suspended
         $healthStatus = match (true) {
-            $recentFailureRate >= 50 => 'failing',
-            $recentFailureRate >= 20 => 'degraded',
-            default                  => 'healthy',
+            $recentFailureRate >= 50 => WebhookHealthStatus::FAILING,
+            default                  => WebhookHealthStatus::ACTIVE,
         };
 
         $this->update(['health_status' => $healthStatus]);
+    }
+
+    /**
+     * Scope a query to only include healthy (active) webhooks.
+     */
+    public function scopeHealthy($query)
+    {
+        return $query->where('health_status', WebhookHealthStatus::ACTIVE);
+    }
+
+    /**
+     * Scope a query to only include failing webhooks.
+     */
+    public function scopeFailing($query)
+    {
+        return $query->where('health_status', WebhookHealthStatus::FAILING);
+    }
+
+    /**
+     * Scope a query to only include suspended webhooks.
+     */
+    public function scopeSuspended($query)
+    {
+        return $query->where('health_status', WebhookHealthStatus::SUSPENDED);
+    }
+
+    /**
+     * Scope a query to webhooks that need recovery.
+     */
+    public function scopeNeedsRecovery($query)
+    {
+        return $query->whereIn('health_status', [
+            WebhookHealthStatus::FAILING,
+            WebhookHealthStatus::SUSPENDED,
+        ])->where('is_active', false);
     }
 }

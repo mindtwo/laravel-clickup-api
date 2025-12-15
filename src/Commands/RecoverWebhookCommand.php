@@ -19,7 +19,9 @@ class RecoverWebhookCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'clickup:webhook-recover {webhook_id? : The ClickUp webhook ID to recover} {--all: Recover all failed/suspended webhooks}';
+    protected $signature = 'clickup:webhook-recover
+                            {webhook_id? : The ClickUp webhook ID to recover}
+                            {--all : Recover all failed/suspended webhooks}';
 
     /**
      * The console command description.

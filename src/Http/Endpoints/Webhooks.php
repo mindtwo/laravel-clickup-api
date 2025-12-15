@@ -221,7 +221,7 @@ class Webhooks
                         : ($apiWebhook['events'][0] ?? '*'),
                     'target_type'       => $targetType,
                     'target_id'         => $targetId,
-                    'is_active'         => ($apiWebhook['health']['status'] ?? 'active') === 'active',
+                    'is_active'         => ($apiWebhook['health']['status'] !== 'suspended'),
                     'health_status'     => WebhookHealthStatus::from($apiWebhook['health']['status'] ?? 'active'),
                     'fail_count'        => $apiWebhook['health']['fail_count'] ?? 0,
                     'health_checked_at' => now(),

@@ -115,4 +115,30 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
             Listeners\LogClickUpEvent::class
         );
     }
+
+    /**
+     * Validate required configuration values.
+     */
+    protected function validateConfiguration(): void
+    {
+        // Check if API key is configured
+        $apiKey = config('clickup-api.api_key');
+
+        if (empty($apiKey)) {
+            throw new \RuntimeException(
+                'ClickUp API key is not configured. '.
+                'Please set the CLICKUP_API_KEY environment variable or publish the config file.'
+            );
+        }
+
+        // Validate rate limit is a positive integer
+        $rateLimit = config('clickup-api.rate_limit_per_minute', 100);
+
+        if (! is_int($rateLimit) || $rateLimit <= 0) {
+            throw new \RuntimeException(
+                'ClickUp API rate limit must be a positive integer. '.
+                "Current value: {$rateLimit}"
+            );
+        }
+    }
 }

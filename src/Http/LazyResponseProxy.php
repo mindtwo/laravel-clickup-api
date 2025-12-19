@@ -8,7 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
-use SebastianBergmann\Template\RuntimeException;
+use RuntimeException;
 
 /**
  * Lazy response proxy that behaves like a Response but can also return a job.

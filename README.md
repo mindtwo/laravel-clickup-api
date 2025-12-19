@@ -302,6 +302,110 @@ to guests, and whether the field is required. The command outputs this
 information in a well-organized table format, making it easy to read and analyze
 directly from the terminal.
 
+## Webhook Security
+
+Securing your ClickUp webhook endpoints is crucial to ensure that only legitimate webhook events from ClickUp are processed by your application. This package provides built-in signature verification using HMAC-SHA256.
+
+### How Webhook Signature Verification Works
+
+When ClickUp sends a webhook event to your application, it includes an `X-Signature` header containing an HMAC-SHA256 hash of the webhook payload. This signature is generated using a secret key that is shared between ClickUp and your application.
+
+The verification process:
+1. ClickUp sends a webhook request with an `X-Signature` header
+2. Your application retrieves the webhook secret from the database
+3. The application computes the expected signature using HMAC-SHA256
+4. The computed signature is compared with the provided signature using a timing-safe comparison
+5. If the signatures match, the webhook is authentic and processing continues
+
+### Registering the Middleware
+
+To enable webhook signature verification, register the middleware in your application. You have two options:
+
+**Option 1: Register globally in `bootstrap/app.php` (Laravel 11+)**
+
+```php
+use Mindtwo\LaravelClickUpApi\Http\Middleware\VerifyClickUpWebhookSignature;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'clickup.webhook' => VerifyClickUpWebhookSignature::class,
+        ]);
+    })
+    // ...
+    ->create();
+```
+
+**Option 2: Register in `app/Http/Kernel.php` (Laravel 10)**
+
+```php
+protected $middlewareAliases = [
+    // ... other middleware
+    'clickup.webhook' => \Mindtwo\LaravelClickUpApi\Http\Middleware\VerifyClickUpWebhookSignature::class,
+];
+```
+
+### Applying the Middleware to Routes
+
+Once registered, apply the middleware to your webhook route:
+
+```php
+// In your routes/web.php or routes/api.php
+Route::post('/webhooks/clickup', [WebhookController::class, 'handle'])
+    ->middleware('clickup.webhook');
+```
+
+Note: The package automatically registers webhook routes if `webhook.enabled` is set to `true` in the config file. The middleware is applied automatically to these routes.
+
+### Webhook Secret Storage
+
+When you create a webhook using ClickUp's API, ClickUp generates a unique secret for that webhook. This secret must be stored in your database to enable signature verification.
+
+The package automatically captures and stores webhook secrets in the `clickup_webhooks` table when creating webhooks via the `webhooks()->create()` or `webhooks()->createManaged()` methods:
+
+```php
+use Mindtwo\LaravelClickUpApi\Facades\ClickUpClient as ClickUp;
+
+// Create a webhook - secret is automatically captured
+$response = ClickUp::webhooks()->create($workspaceId, [
+    'endpoint' => 'https://your-app.com/webhooks/clickup',
+    'events' => ['taskCreated', 'taskUpdated'],
+]);
+
+// The webhook secret is stored in the database
+$webhook = $response['webhook'];
+// Secret is available at: $webhook['secret']
+```
+
+### Security Best Practices
+
+1. **Always use HTTPS**: Configure your webhook endpoint to use HTTPS to prevent man-in-the-middle attacks
+2. **Keep secrets secure**: Never commit webhook secrets to version control or expose them in logs
+3. **Validate webhook IDs**: The middleware checks that the webhook ID exists in your database before processing
+4. **Use timing-safe comparison**: The package uses `hash_equals()` for constant-time signature comparison to prevent timing attacks
+5. **Monitor failed attempts**: Failed signature verifications are logged with IP addresses for security monitoring
+6. **Disable inactive webhooks**: Use the health monitoring system to automatically disable failing webhooks
+
+### Troubleshooting Signature Verification
+
+If webhook signature verification is failing:
+
+1. **Check the webhook exists**: Ensure the webhook is registered in your `clickup_webhooks` table
+2. **Verify the secret is stored**: Check that the `secret` column is not null for the webhook
+3. **Check the X-Signature header**: Ensure ClickUp is sending the `X-Signature` header
+4. **Review logs**: Check your Laravel logs for signature verification warnings
+5. **Test with ClickUp API**: Use ClickUp's webhook testing feature to verify your endpoint
+
+Example log entry for a failed verification:
+
+```
+[2025-12-19 10:30:45] local.WARNING: Invalid ClickUp webhook signature
+{
+    "webhook_id": "wh_abc123",
+    "ip": "192.168.1.1"
+}
+```
+
 ## Webhook Health Monitoring
 
 This package includes automatic webhook health monitoring to ensure your ClickUp webhooks remain active and functional. The system periodically checks the health status of all registered webhooks and takes appropriate actions when issues are detected.

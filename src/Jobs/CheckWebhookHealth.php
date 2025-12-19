@@ -107,7 +107,19 @@ class CheckWebhookHealth implements ShouldQueue
         }
 
         $previousStatus = $webhook->health_status;
-        $newStatus = WebhookHealthStatus::from($apiWebhook['status'] ?? 'active');
+
+        // Validate status before converting to enum
+        $status = $apiWebhook['status'] ?? 'active';
+        if (! in_array($status, ['active', 'failing', 'suspended'], true)) {
+            Log::warning('Unknown webhook status from ClickUp API', [
+                'webhook_id' => $webhook->clickup_webhook_id,
+                'status'     => $status,
+            ]);
+
+            return;
+        }
+
+        $newStatus = WebhookHealthStatus::from($status);
         $failCount = $apiWebhook['fail_count'] ?? 0;
 
         // Update webhook health data

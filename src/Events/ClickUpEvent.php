@@ -15,11 +15,12 @@ abstract class ClickUpEvent
     /**
      * Create a new event instance.
      *
-     * @param array $payload The event data payload
+     * @param array<string, mixed> $payload The event data payload
      * @param EventSource $source The source of the event (API or Webhook)
      * @param bool $successful Whether the operation was successful
      */
     public function __construct(
+        /** @var array<string, mixed> */
         public array $payload,
         public EventSource $source = EventSource::API,
         public bool $successful = true,
@@ -52,6 +53,8 @@ abstract class ClickUpEvent
     /**
      * Get the history items (what changed) from webhook payload.
      * Only available for webhook events.
+     *
+     * @return array<string, mixed>
      */
     public function getHistoryItems(): array
     {

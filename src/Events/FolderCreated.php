@@ -6,7 +6,7 @@ namespace Mindtwo\LaravelClickUpApi\Events;
 
 class FolderCreated extends ClickUpEvent
 {
-    public function getFolderId(): string|int
+    public function getFolderId(): int
     {
         return $this->payload['folder_id'];
     }

@@ -44,13 +44,13 @@ class CheckWebhookHealthTest extends TestCase
 
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'active',
+                'id'         => 'wh_123',
+                'status'     => 'active',
                 'fail_count' => 0,
             ],
         ]);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -65,8 +65,8 @@ class CheckWebhookHealthTest extends TestCase
 
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'failing',
+                'id'         => 'wh_123',
+                'status'     => 'failing',
                 'fail_count' => 45,
             ],
         ]);
@@ -75,7 +75,7 @@ class CheckWebhookHealthTest extends TestCase
         Log::shouldReceive('debug')->once();
         Log::shouldReceive('warning')->times(2); // Status change + auto-disable
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -90,8 +90,8 @@ class CheckWebhookHealthTest extends TestCase
 
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'suspended',
+                'id'         => 'wh_123',
+                'status'     => 'suspended',
                 'fail_count' => 100,
             ],
         ]);
@@ -100,7 +100,7 @@ class CheckWebhookHealthTest extends TestCase
         Log::shouldReceive('debug')->once();
         Log::shouldReceive('warning')->times(2);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -116,13 +116,13 @@ class CheckWebhookHealthTest extends TestCase
         // First check - some failures
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'active',
+                'id'         => 'wh_123',
+                'status'     => 'active',
                 'fail_count' => 10,
             ],
         ]);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -132,13 +132,13 @@ class CheckWebhookHealthTest extends TestCase
         // Second check - more failures but still active
         $webhooksEndpoint2 = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'active',
+                'id'         => 'wh_123',
+                'status'     => 'active',
                 'fail_count' => 25,
             ],
         ]);
 
-        $job2 = new CheckWebhookHealth();
+        $job2 = new CheckWebhookHealth;
         $job2->handle($webhooksEndpoint2);
 
         $webhook->refresh();
@@ -153,13 +153,13 @@ class CheckWebhookHealthTest extends TestCase
 
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'active',
+                'id'         => 'wh_123',
+                'status'     => 'active',
                 'fail_count' => 0,
             ],
             [
-                'id' => 'wh_456',
-                'status' => 'failing',
+                'id'         => 'wh_456',
+                'status'     => 'failing',
                 'fail_count' => 50,
             ],
         ]);
@@ -168,7 +168,7 @@ class CheckWebhookHealthTest extends TestCase
         Log::shouldReceive('debug')->once();
         Log::shouldReceive('warning')->times(2); // For webhook2 status change
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook1->refresh();
@@ -188,18 +188,18 @@ class CheckWebhookHealthTest extends TestCase
         // API returns webhook that doesn't exist in our database
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'active',
+                'id'         => 'wh_123',
+                'status'     => 'active',
                 'fail_count' => 0,
             ],
             [
-                'id' => 'wh_unknown',
-                'status' => 'active',
+                'id'         => 'wh_unknown',
+                'status'     => 'active',
                 'fail_count' => 0,
             ],
         ]);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         // Should only update wh_123
@@ -219,7 +219,7 @@ class CheckWebhookHealthTest extends TestCase
         $webhooksEndpoint = Mockery::mock(Webhooks::class);
         // Should not call index() method
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         // Test passes if no exception is thrown
@@ -242,7 +242,7 @@ class CheckWebhookHealthTest extends TestCase
         Log::shouldReceive('info')->once(); // Starting check
         Log::shouldReceive('warning')->once(); // Failed API call
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         // Webhook should not be updated
@@ -256,8 +256,8 @@ class CheckWebhookHealthTest extends TestCase
 
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
-                'status' => 'failing',
+                'id'         => 'wh_123',
+                'status'     => 'failing',
                 'fail_count' => 45,
             ],
         ]);
@@ -276,7 +276,7 @@ class CheckWebhookHealthTest extends TestCase
             ->once()
             ->with('Webhook auto-disabled due to health status', Mockery::any());
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
     }
 
@@ -293,7 +293,7 @@ class CheckWebhookHealthTest extends TestCase
             ],
         ]);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -307,13 +307,13 @@ class CheckWebhookHealthTest extends TestCase
         // API response without fail_count (should default to 0)
         $webhooksEndpoint = $this->mockWebhooksEndpoint([
             [
-                'id' => 'wh_123',
+                'id'     => 'wh_123',
                 'status' => 'active',
                 // No 'fail_count' field
             ],
         ]);
 
-        $job = new CheckWebhookHealth();
+        $job = new CheckWebhookHealth;
         $job->handle($webhooksEndpoint);
 
         $webhook->refresh();
@@ -327,13 +327,13 @@ class CheckWebhookHealthTest extends TestCase
     {
         return ClickUpWebhook::create([
             'clickup_webhook_id' => $webhookId,
-            'endpoint' => 'https://test.local/webhooks/clickup',
-            'event' => '*',
-            'target_type' => 'workspace',
-            'target_id' => 'workspace_123',
-            'secret' => 'test-secret',
-            'is_active' => true,
-            'health_status' => $status,
+            'endpoint'           => 'https://test.local/webhooks/clickup',
+            'event'              => '*',
+            'target_type'        => 'workspace',
+            'target_id'          => 'workspace_123',
+            'secret'             => 'test-secret',
+            'is_active'          => true,
+            'health_status'      => $status,
         ]);
     }
 

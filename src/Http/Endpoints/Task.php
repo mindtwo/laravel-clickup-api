@@ -161,7 +161,6 @@ class Task
      */
     public function showWithRelationships(int|string $taskId): array
     {
-        /** @var Response $response */
         $response = $this->show($taskId);
 
         /**

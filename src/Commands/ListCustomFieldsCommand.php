@@ -7,6 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
+use JsonException;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
@@ -48,8 +49,7 @@ class ListCustomFieldsCommand extends Command
         $response = app(CustomField::class)->show($listId);
 
         /**
-         * @var array<string, array<string, int|string>|int|string> $responsePayload Contains 'task', 'dependencies',
-         *                                                          'fields', and 'linked_tasks' keys
+         * @var array<int, array<string, mixed>> $responsePayload
          */
         $responsePayload = $response->json('fields');
 
@@ -57,16 +57,29 @@ class ListCustomFieldsCommand extends Command
             ['ID', 'Name', 'Type', 'Type Config', 'Date Created', 'Hide From Guests', 'Required'],
             collect($responsePayload)
                 ->map(
+                    /**
+                     * @param array<string, mixed> $customField
+                     *
+                     * @throws JsonException
+                     *
+                     * @return array<int, string>
+                     */
                     function (array $customField): array {
-                        /** @var array<string, int|string>|int|string */
+
+                        /** @var bool $hideFromGuests */
+                        $hideFromGuests = $customField['hide_from_guests'] ?? false;
+
+                        /** @var bool $required */
+                        $required = $customField['required'] ?? false;
+
                         return [
                             $customField['id'],
                             $customField['name'],
                             $customField['type'],
                             json_encode($customField['type_config'], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
                             $customField['date_created'],
-                            Str::of((string) $customField['hide_from_guests'])->toString(),
-                            Str::of((string) $customField['required'])->toString(),
+                            Str::of((string) $hideFromGuests)->toString(),
+                            Str::of((string) $required)->toString(),
                         ];
                     }
                 )

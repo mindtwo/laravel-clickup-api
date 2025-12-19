@@ -159,9 +159,9 @@ class RecoverWebhookCommandTest extends TestCase
     {
         $webhook = $this->createWebhook([
             'clickup_webhook_id' => 'wh_123',
-            'health_status' => WebhookHealthStatus::FAILING,
-            'is_active' => false,
-            'fail_count' => 75,
+            'health_status'      => WebhookHealthStatus::FAILING,
+            'is_active'          => false,
+            'fail_count'         => 75,
         ]);
 
         $webhooksEndpoint = $this->mockSuccessfulRecovery('wh_123');
@@ -219,10 +219,10 @@ class RecoverWebhookCommandTest extends TestCase
     {
         $webhook = $this->createWebhook([
             'clickup_webhook_id' => 'wh_123',
-            'endpoint' => 'https://example.com/webhook',
-            'health_status' => WebhookHealthStatus::SUSPENDED,
-            'is_active' => false,
-            'fail_count' => 100,
+            'endpoint'           => 'https://example.com/webhook',
+            'health_status'      => WebhookHealthStatus::SUSPENDED,
+            'is_active'          => false,
+            'fail_count'         => 100,
         ]);
 
         $webhooksEndpoint = $this->mockSuccessfulRecovery('wh_123');
@@ -245,9 +245,9 @@ class RecoverWebhookCommandTest extends TestCase
     {
         return $this->createWebhook([
             'clickup_webhook_id' => $webhookId,
-            'health_status' => WebhookHealthStatus::FAILING,
-            'is_active' => false,
-            'fail_count' => 50,
+            'health_status'      => WebhookHealthStatus::FAILING,
+            'is_active'          => false,
+            'fail_count'         => 50,
         ]);
     }
 
@@ -258,9 +258,9 @@ class RecoverWebhookCommandTest extends TestCase
     {
         return $this->createWebhook([
             'clickup_webhook_id' => $webhookId,
-            'health_status' => WebhookHealthStatus::SUSPENDED,
-            'is_active' => false,
-            'fail_count' => 100,
+            'health_status'      => WebhookHealthStatus::SUSPENDED,
+            'is_active'          => false,
+            'fail_count'         => 100,
         ]);
     }
 
@@ -271,9 +271,9 @@ class RecoverWebhookCommandTest extends TestCase
     {
         return $this->createWebhook([
             'clickup_webhook_id' => $webhookId,
-            'health_status' => WebhookHealthStatus::ACTIVE,
-            'is_active' => true,
-            'fail_count' => 0,
+            'health_status'      => WebhookHealthStatus::ACTIVE,
+            'is_active'          => true,
+            'fail_count'         => 0,
         ]);
     }
 
@@ -283,11 +283,11 @@ class RecoverWebhookCommandTest extends TestCase
     protected function createWebhook(array $attributes): ClickUpWebhook
     {
         return ClickUpWebhook::create(array_merge([
-            'endpoint' => 'https://test.local/webhooks/clickup',
-            'event' => '*',
+            'endpoint'    => 'https://test.local/webhooks/clickup',
+            'event'       => '*',
             'target_type' => 'workspace',
-            'target_id' => 'workspace_123',
-            'secret' => 'test-secret',
+            'target_id'   => 'workspace_123',
+            'secret'      => 'test-secret',
         ], $attributes));
     }
 

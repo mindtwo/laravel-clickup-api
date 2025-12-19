@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
@@ -46,7 +47,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         // Register the main ClickUp client
-        $this->app->singleton(ClickUpClient::class, function ($app) {
+        $this->app->singleton(ClickUpClient::class, function (Application $app) {
             /** @var string $string */
             $string = config('clickup-api.api_key');
 
@@ -75,7 +76,9 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
     {
         // Add ratelimiter for api call jobs
         RateLimiter::for('clickup-api-jobs', function (object $job) {
-            return Limit::perMinute(config('clickup-api.rate_limit_per_minute'))->by('clickup-api-jobs');
+            /** @var int $rateLimit */
+            $rateLimit = config('clickup-api.rate_limit_per_minute');
+            return Limit::perMinute($rateLimit)->by('clickup-api-jobs');
         });
 
         // Register webhook routes
@@ -132,9 +135,10 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         }
 
         // Validate rate limit is a positive integer
+        /** @var int $rateLimit */
         $rateLimit = config('clickup-api.rate_limit_per_minute', 100);
 
-        if (! is_int($rateLimit) || $rateLimit <= 0) {
+        if ($rateLimit <= 0) {
             throw new \RuntimeException(
                 'ClickUp API rate limit must be a positive integer. '.
                 "Current value: {$rateLimit}"

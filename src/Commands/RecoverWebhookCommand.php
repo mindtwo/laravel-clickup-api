@@ -111,6 +111,12 @@ class RecoverWebhookCommand extends Command
      */
     protected function recoverWebhook(ClickUpWebhook $webhook, Webhooks $webhooksEndpoint): bool
     {
+        if (empty($webhook->clickup_webhook_id)) {
+            $this->error('Webhook does not have a ClickUp webhook ID.');
+
+            return false;
+        }
+
         $this->info("Attempting to recover webhook: {$webhook->clickup_webhook_id}");
         $this->line("  Status: {$webhook->health_status->value}");
         $this->line("  Endpoint: {$webhook->endpoint}");
@@ -141,8 +147,15 @@ class RecoverWebhookCommand extends Command
                 return true;
             }
 
-            $error = $response->json()['err'] ?? 'Unknown error';
-            $this->error("  ✗ Failed to recover webhook: {$error}");
+            /* @var array<string, mixed> $responseJson */
+            $responseJson = $response->json();
+            if (is_array($responseJson)) {
+                /** @var string $error */
+                $error = $responseJson['err'] ?? 'Unknown error';
+                $this->error("  ✗ Failed to recover webhook: {$error}");
+            } else {
+                $this->error('  ✗ Failed to recover webhook: Unknown error format from ClickUp API');
+            }
 
             return false;
         } catch (Throwable $e) {

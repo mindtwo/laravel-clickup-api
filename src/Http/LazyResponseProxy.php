@@ -27,11 +27,16 @@ class LazyResponseProxy
 
     protected ClickUpApiCallJob $job;
 
-    /**
-     * @var true
-     */
     private bool $executed = false;
 
+    /**
+     * @param ClickUpClient $api The ClickUp API client
+     * @param string $endpoint The API endpoint
+     * @param string $method The HTTP method (GET, POST, etc.)
+     * @param array<string, mixed> $body The request body
+     * @param array<string, mixed> $queryParams The query parameters
+     * @param array<string, mixed> $options Additional options (e.g., multipart)
+     */
     public function __construct(
         protected ClickUpClient $api,
         protected string $endpoint,
@@ -121,6 +126,10 @@ class LazyResponseProxy
 
     /**
      * Proxy all method calls to the executed Response.
+     *
+     * @param array<string, mixed> $parameters
+     *
+     * @throws ConnectionException
      */
     public function __call(string $method, array $parameters): mixed
     {

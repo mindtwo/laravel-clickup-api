@@ -15,10 +15,9 @@ class Space
     /**
      * Get all spaces in a workspace/team.
      *
-     * @param ?int|string $teamId The workspace/team ID
+     * @param int|string|null $teamId The workspace/team ID
      * @param bool $archived Include archived spaces
      *
-     * @throws ConnectionException
      */
     public function index(int|string|null $teamId = null, bool $archived = false): LazyResponseProxy
     {

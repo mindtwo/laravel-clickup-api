@@ -32,7 +32,8 @@ class Webhooks
      * Set up a webhook to monitor for events.
      * We do not have a dedicated IP address for webhooks.
      *
-     * @param array $data Webhook data including:
+     * @param int|string $workspaceId The workspace ID
+     * @param array<string, mixed> $data Webhook data including:
      *                    - endpoint (string, required): The URL to send the webhook events to
      *                    - events (array of strings, required): The events to monitor (e.g taskCreated, taskUpdated)
      *                    - space_id (int, optional): The ID of the space to monitor
@@ -62,7 +63,8 @@ class Webhooks
     /**
      * Update a webhook to change the events to be monitored.
      *
-     * @param array $data Webhook data including:
+     * @param int|string $webhookId The webhook ID
+     * @param array<string, mixed> $data Webhook data including:
      *                    - endpoint (string, required): The URL to send the webhook events to
      *                    - events (array of strings, required): The events to monitor (e.g., taskCreated, taskUpdated)
      *                    - status (string, optional): The webhook status (active or inactive)
@@ -97,7 +99,8 @@ class Webhooks
      * Create a webhook and store it in the database.
      * This method handles both the API call to ClickUp and the local database storage.
      *
-     * @param array $data Webhook configuration
+     * @param int|string $workspaceId The workspace ID
+     * @param array<string, mixed> $data Webhook configuration
      *
      * @return ClickUpWebhook The created webhook model
      */
@@ -133,8 +136,11 @@ class Webhooks
 
     /**
      * Update a webhook in ClickUp and sync to database.
+     *
+     * @param int|string $webhookId The webhook ID
+     * @param array<string, mixed> $data Webhook data to update
      */
-    public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook
+    public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook|null
     {
         // Execute API call
         $response = $this->update($webhookId, $data);
@@ -191,6 +197,9 @@ class Webhooks
 
     /**
      * Fetch webhooks from ClickUp API and sync with database.
+     *
+     * @param int|string $workspaceId The workspace ID
+     * @return Collection<int, ClickUpWebhook> The collection of synced webhooks
      */
     public function syncFromApi(int|string $workspaceId): Collection
     {
@@ -237,7 +246,10 @@ class Webhooks
     /**
      * Determine the target type and ID from webhook data.
      *
-     * @return array [targetType, targetId]
+     * @param int|string $workspaceId
+     * @param array<string, mixed> $data
+     *
+     * @return array<int, mixed> [targetType, targetId]
      */
     private function determineTarget(int|string $workspaceId, array $data): array
     {

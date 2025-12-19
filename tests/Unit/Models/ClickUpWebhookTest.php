@@ -31,16 +31,16 @@ class ClickUpWebhookTest extends TestCase
 
         // Create deliveries
         $webhook->deliveries()->create([
-            'event' => 'taskCreated',
-            'payload' => ['test' => 'data'],
-            'status' => 'processed',
+            'event'           => 'taskCreated',
+            'payload'         => ['test' => 'data'],
+            'status'          => 'processed',
             'idempotency_key' => 'key1',
         ]);
 
         $webhook->deliveries()->create([
-            'event' => 'taskUpdated',
-            'payload' => ['test' => 'data2'],
-            'status' => 'processed',
+            'event'           => 'taskUpdated',
+            'payload'         => ['test' => 'data2'],
+            'status'          => 'processed',
             'idempotency_key' => 'key2',
         ]);
 
@@ -103,7 +103,7 @@ class ClickUpWebhookTest extends TestCase
     public function test_failure_rate_attribute_calculates_correctly(): void
     {
         $webhook = $this->createWebhook([
-            'total_deliveries' => 100,
+            'total_deliveries'  => 100,
             'failed_deliveries' => 25,
         ]);
 
@@ -113,7 +113,7 @@ class ClickUpWebhookTest extends TestCase
     public function test_failure_rate_returns_zero_for_no_deliveries(): void
     {
         $webhook = $this->createWebhook([
-            'total_deliveries' => 0,
+            'total_deliveries'  => 0,
             'failed_deliveries' => 0,
         ]);
 
@@ -180,23 +180,23 @@ class ClickUpWebhookTest extends TestCase
     {
         $this->createWebhook([
             'clickup_webhook_id' => 'wh_1',
-            'health_status' => WebhookHealthStatus::ACTIVE,
-            'is_active' => true,
+            'health_status'      => WebhookHealthStatus::ACTIVE,
+            'is_active'          => true,
         ]);
         $this->createWebhook([
             'clickup_webhook_id' => 'wh_2',
-            'health_status' => WebhookHealthStatus::FAILING,
-            'is_active' => false,
+            'health_status'      => WebhookHealthStatus::FAILING,
+            'is_active'          => false,
         ]);
         $this->createWebhook([
             'clickup_webhook_id' => 'wh_3',
-            'health_status' => WebhookHealthStatus::SUSPENDED,
-            'is_active' => false,
+            'health_status'      => WebhookHealthStatus::SUSPENDED,
+            'is_active'          => false,
         ]);
         $this->createWebhook([
             'clickup_webhook_id' => 'wh_4',
-            'health_status' => WebhookHealthStatus::FAILING,
-            'is_active' => true, // Still active, doesn't need recovery
+            'health_status'      => WebhookHealthStatus::FAILING,
+            'is_active'          => true, // Still active, doesn't need recovery
         ]);
 
         $needsRecovery = ClickUpWebhook::needsRecovery()->get();
@@ -223,21 +223,21 @@ class ClickUpWebhookTest extends TestCase
         // Create 6 failed deliveries and 4 successful (60% failure rate)
         for ($i = 0; $i < 6; $i++) {
             $webhook->deliveries()->create([
-                'event' => 'taskCreated',
-                'payload' => ['test' => 'data'],
-                'status' => 'failed',
+                'event'           => 'taskCreated',
+                'payload'         => ['test' => 'data'],
+                'status'          => 'failed',
                 'idempotency_key' => 'fail_'.$i,
-                'created_at' => now(),
+                'created_at'      => now(),
             ]);
         }
 
         for ($i = 0; $i < 4; $i++) {
             $webhook->deliveries()->create([
-                'event' => 'taskCreated',
-                'payload' => ['test' => 'data'],
-                'status' => 'processed',
+                'event'           => 'taskCreated',
+                'payload'         => ['test' => 'data'],
+                'status'          => 'processed',
                 'idempotency_key' => 'success_'.$i,
-                'created_at' => now(),
+                'created_at'      => now(),
             ]);
         }
 
@@ -254,21 +254,21 @@ class ClickUpWebhookTest extends TestCase
         // Create old failed deliveries (beyond 24 hours)
         for ($i = 0; $i < 10; $i++) {
             $webhook->deliveries()->create([
-                'event' => 'taskCreated',
-                'payload' => ['test' => 'data'],
-                'status' => 'failed',
+                'event'           => 'taskCreated',
+                'payload'         => ['test' => 'data'],
+                'status'          => 'failed',
                 'idempotency_key' => 'old_fail_'.$i,
-                'created_at' => now()->subHours(25),
+                'created_at'      => now()->subHours(25),
             ]);
         }
 
         // Create recent successful delivery
         $webhook->deliveries()->create([
-            'event' => 'taskCreated',
-            'payload' => ['test' => 'data'],
-            'status' => 'processed',
+            'event'           => 'taskCreated',
+            'payload'         => ['test' => 'data'],
+            'status'          => 'processed',
             'idempotency_key' => 'recent_success',
-            'created_at' => now(),
+            'created_at'      => now(),
         ]);
 
         $webhook->updateHealthStatus();
@@ -294,7 +294,7 @@ class ClickUpWebhookTest extends TestCase
 
     public function test_webhook_has_correct_table_name(): void
     {
-        $webhook = new ClickUpWebhook();
+        $webhook = new ClickUpWebhook;
 
         $this->assertEquals('clickup_webhooks', $webhook->getTable());
     }
@@ -306,16 +306,16 @@ class ClickUpWebhookTest extends TestCase
     {
         return ClickUpWebhook::create(array_merge([
             'clickup_webhook_id' => 'wh_test_'.uniqid(),
-            'endpoint' => 'https://test.local/webhooks/clickup',
-            'event' => '*',
-            'target_type' => 'workspace',
-            'target_id' => 'workspace_123',
-            'secret' => 'test-secret',
-            'is_active' => true,
-            'health_status' => WebhookHealthStatus::ACTIVE,
-            'total_deliveries' => 0,
-            'failed_deliveries' => 0,
-            'fail_count' => 0,
+            'endpoint'           => 'https://test.local/webhooks/clickup',
+            'event'              => '*',
+            'target_type'        => 'workspace',
+            'target_id'          => 'workspace_123',
+            'secret'             => 'test-secret',
+            'is_active'          => true,
+            'health_status'      => WebhookHealthStatus::ACTIVE,
+            'total_deliveries'   => 0,
+            'failed_deliveries'  => 0,
+            'fail_count'         => 0,
         ], $overrides));
     }
 }

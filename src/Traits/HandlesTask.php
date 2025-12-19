@@ -18,6 +18,8 @@ trait HandlesTask
 
     /**
      * Get the task data from the payload.
+     *
+     * @return array<string, mixed>
      */
     public function getTaskData(): array
     {
@@ -26,6 +28,8 @@ trait HandlesTask
 
     /**
      * Get the custom fields of the created task.
+     *
+     * @return array<int|string, mixed>
      */
     public function getCustomFields(): array
     {

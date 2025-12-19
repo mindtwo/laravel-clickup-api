@@ -7,6 +7,19 @@ namespace Mindtwo\LaravelClickUpApi\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $clickup_webhook_id
+ * @property string $event
+ * @property array<string, mixed> $payload
+ * @property string $status
+ * @property string|null $error_message
+ * @property int|null $processing_time_ms
+ * @property string $idempotency_key
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read float|null $processing_time_in_seconds
+ */
 class ClickUpWebhookDelivery extends Model
 {
     protected $table = 'clickup_webhook_deliveries';
@@ -26,6 +39,9 @@ class ClickUpWebhookDelivery extends Model
         'processing_time_ms' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<ClickUpWebhook, $this>
+     */
     public function webhook(): BelongsTo
     {
         return $this->belongsTo(ClickUpWebhook::class, 'clickup_webhook_id');

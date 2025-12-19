@@ -89,8 +89,8 @@ class WebhookControllerTest extends TestCase
 
         $this->assertDatabaseHas('clickup_webhook_deliveries', [
             'clickup_webhook_id' => $webhook->id,
-            'event' => 'taskCreated',
-            'status' => 'processed',
+            'event'              => 'taskCreated',
+            'status'             => 'processed',
         ]);
 
         $delivery = ClickUpWebhookDelivery::first();
@@ -218,28 +218,28 @@ class WebhookControllerTest extends TestCase
     {
         return ClickUpWebhook::create(array_merge([
             'clickup_webhook_id' => 'wh_test_'.uniqid(),
-            'endpoint' => 'https://test.local/webhooks/clickup',
-            'event' => '*',
-            'target_type' => 'workspace',
-            'target_id' => 'workspace_123',
-            'secret' => 'test-secret',
-            'is_active' => true,
-            'health_status' => 'active',
+            'endpoint'           => 'https://test.local/webhooks/clickup',
+            'event'              => '*',
+            'target_type'        => 'workspace',
+            'target_id'          => 'workspace_123',
+            'secret'             => 'test-secret',
+            'is_active'          => true,
+            'health_status'      => 'active',
         ], $overrides));
     }
 
     /**
      * Create a webhook payload for testing.
      */
-    protected function createWebhookPayload(string $event, string $webhookId, string $historyId = null): array
+    protected function createWebhookPayload(string $event, string $webhookId, ?string $historyId = null): array
     {
         return [
-            'webhook_id' => $webhookId,
-            'event' => $event,
-            'task_id' => 'task_123',
+            'webhook_id'    => $webhookId,
+            'event'         => $event,
+            'task_id'       => 'task_123',
             'history_items' => [
                 [
-                    'id' => $historyId ?? 'history_'.uniqid(),
+                    'id'   => $historyId ?? 'history_'.uniqid(),
                     'type' => 1,
                     'date' => '1234567890',
                 ],

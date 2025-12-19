@@ -11,6 +11,13 @@ class ClickUpApiCallCompleted
 {
     use Dispatchable, SerializesModels;
 
+    /**
+     * @param string $endpoint
+     * @param string $method
+     * @param array<string, mixed> $response
+     * @param int $statusCode
+     * @param bool $successful
+     */
     public function __construct(
         public string $endpoint,
         public string $method,
@@ -21,6 +28,8 @@ class ClickUpApiCallCompleted
 
     /**
      * Get the response data.
+     *
+     * @return array<string, mixed>
      */
     public function getData(): array
     {

@@ -51,6 +51,10 @@ class LogClickUpEvent
 
     /**
      * Build the context array for structured logging.
+     *
+     * @param ClickUpEvent $event
+     *
+     * @return array<string, mixed>
      */
     protected function buildLogContext(ClickUpEvent $event): array
     {
@@ -80,6 +84,10 @@ class LogClickUpEvent
 
     /**
      * Extract entity identifiers from the event payload.
+     *
+     * @param ClickUpEvent $event
+     *
+     * @return array<string, mixed>
      */
     protected function extractEntityIds(ClickUpEvent $event): array
     {

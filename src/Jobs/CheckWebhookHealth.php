@@ -96,6 +96,8 @@ class CheckWebhookHealth implements ShouldQueue
 
     /**
      * Sync webhook health data from ClickUp API response.
+     *
+     * @param array<string, mixed> $apiWebhook
      */
     protected function syncWebhookHealth(array $apiWebhook): void
     {
@@ -165,6 +167,8 @@ class CheckWebhookHealth implements ShouldQueue
 
     /**
      * Get the middleware the job should pass through.
+     *
+     * @return array<int, RateLimited>
      */
     public function middleware(): array
     {

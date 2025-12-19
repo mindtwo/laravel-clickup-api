@@ -41,8 +41,6 @@ class ClickUpApiCallJob implements ShouldQueue
     public int $backoff = 30;
 
     /**
-     * @param string $endpoint
-     * @param string $method
      * @param array<string, mixed> $body
      * @param array<string, mixed> $queryParams
      * @param array<string, mixed> $options

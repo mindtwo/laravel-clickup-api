@@ -17,7 +17,6 @@ class Space
      *
      * @param int|string|null $teamId The workspace/team ID
      * @param bool $archived Include archived spaces
-     *
      */
     public function index(int|string|null $teamId = null, bool $archived = false): LazyResponseProxy
     {

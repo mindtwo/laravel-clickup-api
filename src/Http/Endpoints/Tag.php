@@ -33,13 +33,10 @@ class Tag
     /**
      * Create a new task Tag to a Space.
      *
-     * @param int|string $listId
      * @param array<string, int|string> $tagObject data for the tag including:
      *                                             - name (string): Name of the tag
      *                                             - tag_fg (string): foreground color in hex format (e.g., #FFFFFF)
      *                                             - tag_bg (string): background color in hex format (e.g., #000000)
-     *
-     * @return LazyResponseProxy
      */
     public function create(int|string $listId, array $tagObject): LazyResponseProxy
     {

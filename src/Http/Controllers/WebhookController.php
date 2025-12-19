@@ -141,7 +141,7 @@ class WebhookController extends Controller
 
     /**
      * Dispatch the appropriate Laravel event based on ClickUp event type.
-     * @param string $eventType
+     *
      * @param array<string, mixed> $payload
      */
     private function dispatchEvent(string $eventType, array $payload): void

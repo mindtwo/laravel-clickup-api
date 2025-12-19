@@ -34,12 +34,12 @@ class Webhooks
      *
      * @param int|string $workspaceId The workspace ID
      * @param array<string, mixed> $data Webhook data including:
-     *                    - endpoint (string, required): The URL to send the webhook events to
-     *                    - events (array of strings, required): The events to monitor (e.g taskCreated, taskUpdated)
-     *                    - space_id (int, optional): The ID of the space to monitor
-     *                    - folder_id (int, optional): The ID of the folder to monitor
-     *                    - list_id (int, optional): The ID of the list to monitor
-     *                    - task_id (int, optional): The ID of the task to monitor
+     *                                   - endpoint (string, required): The URL to send the webhook events to
+     *                                   - events (array of strings, required): The events to monitor (e.g taskCreated, taskUpdated)
+     *                                   - space_id (int, optional): The ID of the space to monitor
+     *                                   - folder_id (int, optional): The ID of the folder to monitor
+     *                                   - list_id (int, optional): The ID of the list to monitor
+     *                                   - task_id (int, optional): The ID of the task to monitor
      */
     public function create(int|string $workspaceId, array $data): LazyResponseProxy
     {
@@ -65,9 +65,9 @@ class Webhooks
      *
      * @param int|string $webhookId The webhook ID
      * @param array<string, mixed> $data Webhook data including:
-     *                    - endpoint (string, required): The URL to send the webhook events to
-     *                    - events (array of strings, required): The events to monitor (e.g., taskCreated, taskUpdated)
-     *                    - status (string, optional): The webhook status (active or inactive)
+     *                                   - endpoint (string, required): The URL to send the webhook events to
+     *                                   - events (array of strings, required): The events to monitor (e.g., taskCreated, taskUpdated)
+     *                                   - status (string, optional): The webhook status (active or inactive)
      */
     public function update(int|string $webhookId, array $data): LazyResponseProxy
     {
@@ -140,7 +140,7 @@ class Webhooks
      * @param int|string $webhookId The webhook ID
      * @param array<string, mixed> $data Webhook data to update
      */
-    public function updateManaged(int|string $webhookId, array $data): ClickUpWebhook|null
+    public function updateManaged(int|string $webhookId, array $data): ?ClickUpWebhook
     {
         // Execute API call
         $response = $this->update($webhookId, $data);
@@ -199,6 +199,7 @@ class Webhooks
      * Fetch webhooks from ClickUp API and sync with database.
      *
      * @param int|string $workspaceId The workspace ID
+     *
      * @return Collection<int, ClickUpWebhook> The collection of synced webhooks
      */
     public function syncFromApi(int|string $workspaceId): Collection
@@ -246,7 +247,6 @@ class Webhooks
     /**
      * Determine the target type and ID from webhook data.
      *
-     * @param int|string $workspaceId
      * @param array<string, mixed> $data
      *
      * @return array<int, mixed> [targetType, targetId]

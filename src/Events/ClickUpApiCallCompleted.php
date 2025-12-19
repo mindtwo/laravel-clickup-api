@@ -12,11 +12,7 @@ class ClickUpApiCallCompleted
     use Dispatchable, SerializesModels;
 
     /**
-     * @param string $endpoint
-     * @param string $method
      * @param array<string, mixed> $response
-     * @param int $statusCode
-     * @param bool $successful
      */
     public function __construct(
         public string $endpoint,

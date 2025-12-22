@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Webhooks;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use Mindtwo\LaravelClickUpApi\Jobs\CheckWebhookHealth;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
-use Mockery;
 
 uses()->group('webhook-health-job');
 
@@ -37,6 +37,9 @@ test('job syncs webhook health status from api', function () {
             'fail_count' => 0,
         ],
     ]);
+
+    Log::shouldReceive('info')->twice(); // Starting check + completion
+    Log::shouldReceive('debug')->once(); // Fetched webhooks
 
     $job = new CheckWebhookHealth;
     $job->handle($webhooksEndpoint);
@@ -107,6 +110,9 @@ test('job tracks fail count changes', function () {
         ],
     ]);
 
+    Log::shouldReceive('info')->twice();
+    Log::shouldReceive('debug')->once();
+
     $job = new CheckWebhookHealth;
     $job->handle($webhooksEndpoint);
 
@@ -122,6 +128,9 @@ test('job tracks fail count changes', function () {
             'fail_count' => 25,
         ],
     ]);
+
+    Log::shouldReceive('info')->twice();
+    Log::shouldReceive('debug')->once();
 
     $job2 = new CheckWebhookHealth;
     $job2->handle($webhooksEndpoint2);
@@ -182,6 +191,9 @@ test('job skips webhooks not in database', function () {
         ],
     ]);
 
+    Log::shouldReceive('info')->twice();
+    Log::shouldReceive('debug')->once();
+
     $job = new CheckWebhookHealth;
     $job->handle($webhooksEndpoint);
 
@@ -210,9 +222,9 @@ test('job handles missing workspace id gracefully', function () {
 });
 
 test('job handles api errors gracefully', function () {
-    createWebhook('wh_123', WebhookHealthStatus::ACTIVE);
+    createHealthTestWebhook('wh_123', WebhookHealthStatus::ACTIVE);
 
-    $response = Mockery::mock(Response::class);
+    $response = Mockery::mock(LazyResponseProxy::class);
     $response->shouldReceive('status')->andReturn(500);
 
     $webhooksEndpoint = Mockery::mock(Webhooks::class);
@@ -221,7 +233,7 @@ test('job handles api errors gracefully', function () {
         ->once()
         ->andReturn($response);
 
-    Log::shouldReceive('info')->once(); // Starting check
+    Log::shouldReceive('info')->twice(); // Starting check + completion
     Log::shouldReceive('warning')->once(); // Failed API call
 
     $job = new CheckWebhookHealth;
@@ -321,7 +333,7 @@ function createHealthTestWebhook(string $webhookId, WebhookHealthStatus $status)
  */
 function mockHealthTestWebhooksEndpoint(array $webhooks): Webhooks
 {
-    $response = Mockery::mock(Response::class);
+    $response = Mockery::mock(LazyResponseProxy::class);
     $response->shouldReceive('status')->andReturn(200);
     $response->shouldReceive('json')->andReturn(['webhooks' => $webhooks]);
 

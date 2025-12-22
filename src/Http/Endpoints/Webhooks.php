@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Support\Collection;

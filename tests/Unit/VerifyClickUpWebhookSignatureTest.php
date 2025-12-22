@@ -20,15 +20,16 @@ test('middleware passes with valid signature', function () {
     $secret = 'test-webhook-secret';
     $webhook = createSignatureTestWebhook($secret);
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => $webhook->clickup_webhook_id,
         'event'      => 'taskCreated',
         'task_id'    => 'task_123',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $expectedSignature = hash_hmac('sha256', $payload, $secret);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $expectedSignature);
 
     $middleware = new VerifyClickUpWebhookSignature;
@@ -47,20 +48,21 @@ test('middleware rejects invalid signature', function () {
     $secret = 'test-webhook-secret';
     $webhook = createSignatureTestWebhook($secret);
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => $webhook->clickup_webhook_id,
         'event'      => 'taskCreated',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     // Use wrong signature
     $invalidSignature = hash_hmac('sha256', 'wrong-payload', $secret);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $invalidSignature);
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should not call next() with invalid signature');
+        throw new Exception('Middleware should not call next() with invalid signature');
     });
 
     expect($response->getStatusCode())->toBe(401);
@@ -72,17 +74,18 @@ test('middleware rejects invalid signature', function () {
 test('middleware rejects missing signature', function () {
     $webhook = createSignatureTestWebhook('test-secret');
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => $webhook->clickup_webhook_id,
         'event'      => 'taskCreated',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     // No X-Signature header set
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should not call next() with missing signature');
+        throw new Exception('Middleware should not call next() with missing signature');
     });
 
     expect($response->getStatusCode())->toBe(401);
@@ -92,19 +95,20 @@ test('middleware rejects missing signature', function () {
 });
 
 test('middleware rejects missing webhook id', function () {
-    $payload = json_encode([
+    $payloadData = [
         'event' => 'taskCreated',
         // webhook_id is missing
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $signature = hash_hmac('sha256', $payload, 'test-secret');
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $signature);
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should not call next() with missing webhook_id');
+        throw new Exception('Middleware should not call next() with missing webhook_id');
     });
 
     expect($response->getStatusCode())->toBe(400);
@@ -114,19 +118,20 @@ test('middleware rejects missing webhook id', function () {
 });
 
 test('middleware rejects webhook not in database', function () {
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => 'non-existent-webhook',
         'event'      => 'taskCreated',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $signature = hash_hmac('sha256', $payload, 'test-secret');
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $signature);
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should not call next() for unknown webhook');
+        throw new Exception('Middleware should not call next() for unknown webhook');
     });
 
     expect($response->getStatusCode())->toBe(401);
@@ -138,19 +143,20 @@ test('middleware rejects webhook not in database', function () {
 test('middleware rejects webhook without secret', function () {
     $webhook = createSignatureTestWebhook(null); // Webhook without secret
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => $webhook->clickup_webhook_id,
         'event'      => 'taskCreated',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $signature = hash_hmac('sha256', $payload, 'some-secret');
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $signature);
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should not call next() for webhook without secret');
+        throw new Exception('Middleware should not call next() for webhook without secret');
     });
 
     expect($response->getStatusCode())->toBe(401);
@@ -165,14 +171,15 @@ test('middleware uses timing safe comparison', function () {
     $secret = 'test-webhook-secret';
     $webhook = createSignatureTestWebhook($secret);
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id' => $webhook->clickup_webhook_id,
         'event'      => 'taskCreated',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $validSignature = hash_hmac('sha256', $payload, $secret);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $validSignature);
 
     $middleware = new VerifyClickUpWebhookSignature;
@@ -192,16 +199,17 @@ test('middleware handles special characters in payload', function () {
     $secret = 'test-webhook-secret';
     $webhook = createSignatureTestWebhook($secret);
 
-    $payload = json_encode([
+    $payloadData = [
         'webhook_id'    => $webhook->clickup_webhook_id,
         'event'         => 'taskCreated',
         'special_chars' => 'test@#$%^&*(){}[]|\:";\'<>?,./~`',
         'unicode'       => 'テスト',
-    ]);
+    ];
+    $payload = json_encode($payloadData);
 
     $validSignature = hash_hmac('sha256', $payload, $secret);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload);
+    $request = Request::create('/webhooks/clickup', 'POST', $payloadData, [], [], [], $payload);
     $request->headers->set('X-Signature', $validSignature);
 
     $middleware = new VerifyClickUpWebhookSignature;
@@ -216,18 +224,21 @@ test('middleware rejects signature with slightly different payload', function ()
     $secret = 'test-webhook-secret';
     $webhook = createSignatureTestWebhook($secret);
 
-    $payload1 = json_encode(['webhook_id' => $webhook->clickup_webhook_id, 'event' => 'taskCreated']);
-    $payload2 = json_encode(['webhook_id' => $webhook->clickup_webhook_id, 'event' => 'taskUpdated']);
+    $payload1Data = ['webhook_id' => $webhook->clickup_webhook_id, 'event' => 'taskCreated'];
+    $payload2Data = ['webhook_id' => $webhook->clickup_webhook_id, 'event' => 'taskUpdated'];
+
+    $payload1 = json_encode($payload1Data);
+    $payload2 = json_encode($payload2Data);
 
     // Generate signature for payload1 but send payload2
     $signature = hash_hmac('sha256', $payload1, $secret);
 
-    $request = Request::create('/webhooks/clickup', 'POST', [], [], [], [], $payload2);
+    $request = Request::create('/webhooks/clickup', 'POST', $payload2Data, [], [], [], $payload2);
     $request->headers->set('X-Signature', $signature);
 
     $middleware = new VerifyClickUpWebhookSignature;
     $response = $middleware->handle($request, function ($req) {
-        throw new \Exception('Middleware should reject mismatched signature');
+        throw new Exception('Middleware should reject mismatched signature');
     });
 
     expect($response->getStatusCode())->toBe(401);

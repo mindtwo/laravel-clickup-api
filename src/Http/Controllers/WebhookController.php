@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Mindtwo\LaravelClickUpApi\Enums\EventSource;
 use Mindtwo\LaravelClickUpApi\Events\FolderCreated;
 use Mindtwo\LaravelClickUpApi\Events\FolderDeleted;
@@ -57,7 +58,7 @@ class WebhookController extends Controller
             $historyItems = $request->input('history_items', []);
 
             // Generate idempotency key using webhook_id and history_item_id
-            $idempotencyKey = $webhookId.':'.($historyItems[0]['id'] ?? uniqid(more_entropy: true));
+            $idempotencyKey = $webhookId.':'.($historyItems[0]['id'] ?? Str::uuid()->toString());
 
             // Check for duplicate delivery
             if (ClickUpWebhookDelivery::where('idempotency_key', $idempotencyKey)->exists()) {

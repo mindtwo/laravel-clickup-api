@@ -51,8 +51,8 @@ test('webhook casts dates correctly', function () {
         'health_checked_at' => '2025-01-02 12:00:00',
     ]);
 
-    expect($webhook->last_triggered_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
-    expect($webhook->health_checked_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($webhook->last_triggered_at)->toBeInstanceOf(Illuminate\Support\Carbon::class);
+    expect($webhook->health_checked_at)->toBeInstanceOf(Illuminate\Support\Carbon::class);
 });
 
 test('webhook casts last error to array', function () {
@@ -224,14 +224,18 @@ test('update health status sets failing with high failure rate', function () {
 test('update health status ignores old deliveries', function () {
     $webhook = createModelTestWebhook(['health_status' => WebhookHealthStatus::ACTIVE]);
 
-    // Create old failed deliveries (beyond 24 hours)
+    $oldTimestamp = now()->subHours(25);
+
+    // Create old failed deliveries (beyond 24 hours) using DB::table to bypass model timestamps
     for ($i = 0; $i < 10; $i++) {
-        $webhook->deliveries()->create([
-            'event'           => 'taskCreated',
-            'payload'         => ['test' => 'data'],
-            'status'          => 'failed',
-            'idempotency_key' => 'old_fail_'.$i,
-            'created_at'      => now()->subHours(25),
+        Illuminate\Support\Facades\DB::table('clickup_webhook_deliveries')->insert([
+            'clickup_webhook_id' => $webhook->id,
+            'event'              => 'taskCreated',
+            'payload'            => json_encode(['test' => 'data']),
+            'status'             => 'failed',
+            'idempotency_key'    => 'old_fail_'.$i,
+            'created_at'         => $oldTimestamp,
+            'updated_at'         => $oldTimestamp,
         ]);
     }
 
@@ -241,7 +245,6 @@ test('update health status ignores old deliveries', function () {
         'payload'         => ['test' => 'data'],
         'status'          => 'processed',
         'idempotency_key' => 'recent_success',
-        'created_at'      => now(),
     ]);
 
     $webhook->updateHealthStatus();

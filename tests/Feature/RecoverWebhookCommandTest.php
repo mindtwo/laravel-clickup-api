@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Webhooks;
+use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
-use Mockery;
 
 uses()->group('recover-webhook-command');
 
@@ -32,10 +32,22 @@ test('command requires webhook id or all flag', function () {
 test('command recovers single webhook by id', function () {
     $webhook = createCommandTestFailingWebhook('wh_123');
 
-    $webhooksEndpoint = mockCommandTestSuccessfulRecovery($webhook->clickup_webhook_id);
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $response = mockCommandTestSuccessResponse();
+
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_123', Mockery::on(function ($data) {
+            return $data['status'] === 'active'
+                && isset($data['endpoint'])
+                && isset($data['events']);
+        }))
+        ->andReturn($response);
+
+    $this->instance(Webhooks::class, $mock);
 
     Log::shouldReceive('info')->once();
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
         ->expectsOutput('Attempting to recover webhook: wh_123')
@@ -60,14 +72,17 @@ test('command recovers all failing webhooks', function () {
     $webhook2 = createCommandTestSuspendedWebhook('wh_456');
     createCommandTestActiveWebhook('wh_789'); // Should not be recovered
 
-    $webhooksEndpoint = Mockery::mock(Webhooks::class);
-    $webhooksEndpoint->shouldReceive('update')
-        ->twice()
-        ->andReturn(mockCommandTestSuccessResponse());
+    $response = mockCommandTestSuccessResponse();
 
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->twice()
+        ->andReturn($response);
+
+    $this->instance(Webhooks::class, $mock);
 
     Log::shouldReceive('info')->times(2);
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['--all' => true])
         ->expectsOutput('Found 2 webhook(s) to recover.')
@@ -94,17 +109,20 @@ test('command handles no webhooks needing recovery', function () {
 test('command handles api errors gracefully', function () {
     $webhook = createCommandTestFailingWebhook('wh_123');
 
-    $response = Mockery::mock(Response::class);
+    $response = Mockery::mock(LazyResponseProxy::class);
     $response->shouldReceive('status')->andReturn(400);
     $response->shouldReceive('json')->andReturn(['err' => 'Invalid webhook data']);
 
-    $webhooksEndpoint = Mockery::mock(Webhooks::class);
-    $webhooksEndpoint->shouldReceive('update')
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
         ->once()
         ->with('wh_123', Mockery::any())
         ->andReturn($response);
 
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $this->instance(Webhooks::class, $mock);
+
+    Log::shouldReceive('info')->never();
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
         ->expectsOutput('  ✗ Failed to recover webhook: Invalid webhook data')
@@ -119,13 +137,14 @@ test('command handles api errors gracefully', function () {
 test('command handles exceptions gracefully', function () {
     $webhook = createCommandTestFailingWebhook('wh_123');
 
-    $webhooksEndpoint = Mockery::mock(Webhooks::class);
-    $webhooksEndpoint->shouldReceive('update')
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
         ->once()
-        ->andThrow(new \Exception('Network error'));
+        ->andThrow(new Exception('Network error'));
 
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $this->instance(Webhooks::class, $mock);
 
+    Log::shouldReceive('info')->never();
     Log::shouldReceive('error')->once();
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
@@ -145,10 +164,20 @@ test('command resets fail count on recovery', function () {
         'fail_count'         => 75,
     ]);
 
-    $webhooksEndpoint = mockCommandTestSuccessfulRecovery('wh_123');
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $response = mockCommandTestSuccessResponse();
+
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_123', Mockery::on(function ($data) {
+            return $data['status'] === 'active';
+        }))
+        ->andReturn($response);
+
+    $this->instance(Webhooks::class, $mock);
 
     Log::shouldReceive('info')->once();
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
         ->assertExitCode(0);
@@ -161,27 +190,30 @@ test('command recovers all with mixed results', function () {
     $webhook1 = createCommandTestFailingWebhook('wh_success');
     $webhook2 = createCommandTestFailingWebhook('wh_failure');
 
-    $webhooksEndpoint = Mockery::mock(Webhooks::class);
+    $successResponse = mockCommandTestSuccessResponse();
 
-    // First webhook succeeds
-    $webhooksEndpoint->shouldReceive('update')
-        ->once()
-        ->with('wh_success', Mockery::any())
-        ->andReturn(mockCommandTestSuccessResponse());
-
-    // Second webhook fails
-    $failureResponse = Mockery::mock(Response::class);
+    $failureResponse = Mockery::mock(LazyResponseProxy::class);
     $failureResponse->shouldReceive('status')->andReturn(400);
     $failureResponse->shouldReceive('json')->andReturn(['err' => 'Failed']);
 
-    $webhooksEndpoint->shouldReceive('update')
+    $mock = Mockery::mock(Webhooks::class);
+
+    // First webhook succeeds
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_success', Mockery::any())
+        ->andReturn($successResponse);
+
+    // Second webhook fails
+    $mock->shouldReceive('update')
         ->once()
         ->with('wh_failure', Mockery::any())
         ->andReturn($failureResponse);
 
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $this->instance(Webhooks::class, $mock);
 
     Log::shouldReceive('info')->once(); // For successful recovery
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['--all' => true])
         ->expectsOutput('Found 2 webhook(s) to recover.')
@@ -204,10 +236,20 @@ test('command displays webhook details', function () {
         'fail_count'         => 100,
     ]);
 
-    $webhooksEndpoint = mockCommandTestSuccessfulRecovery('wh_123');
-    $this->app->instance(Webhooks::class, $webhooksEndpoint);
+    $response = mockCommandTestSuccessResponse();
+
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_123', Mockery::on(function ($data) {
+            return $data['status'] === 'active';
+        }))
+        ->andReturn($response);
+
+    $this->instance(Webhooks::class, $mock);
 
     Log::shouldReceive('info')->once();
+    Log::shouldReceive('error')->never();
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
         ->expectsOutput('Attempting to recover webhook: wh_123')
@@ -291,9 +333,9 @@ function mockCommandTestSuccessfulRecovery(string $webhookId): Webhooks
 /**
  * Mock a successful HTTP response.
  */
-function mockCommandTestSuccessResponse(): Response
+function mockCommandTestSuccessResponse(): LazyResponseProxy
 {
-    $response = Mockery::mock(Response::class);
+    $response = Mockery::mock(LazyResponseProxy::class);
     $response->shouldReceive('status')->andReturn(200);
     $response->shouldReceive('json')->andReturn(['webhook' => ['id' => 'wh_123']]);
 

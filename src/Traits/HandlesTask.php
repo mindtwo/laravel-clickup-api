@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mindtwo\LaravelClickUpApi\Traits;
 
 use Mindtwo\LaravelClickUpApi\Enums\EventSource;

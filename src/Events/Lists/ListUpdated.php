@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Mindtwo\LaravelClickUpApi\Events;
+namespace Mindtwo\LaravelClickUpApi\Events\Lists;
+
+use Mindtwo\LaravelClickUpApi\Events\ClickUpEvent;
 
 class ListUpdated extends ClickUpEvent
 {

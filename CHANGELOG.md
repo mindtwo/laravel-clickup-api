@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
-## [2.0.0] - 2025-12-19
+## [2.0.0] - 2025-12-31
 
 ### Breaking Changes
 

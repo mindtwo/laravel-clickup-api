@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
-use Mindtwo\LaravelClickUpApi\Events\TaskCreated;
-use Mindtwo\LaravelClickUpApi\Events\TaskUpdated;
+use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskCreated;
+use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskUpdated;
 use Mindtwo\LaravelClickUpApi\Http\Middleware\VerifyClickUpWebhookSignature;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhook;
 use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhookDelivery;

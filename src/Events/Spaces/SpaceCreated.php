@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Mindtwo\LaravelClickUpApi\Events;
+namespace Mindtwo\LaravelClickUpApi\Events\Spaces;
+
+use Mindtwo\LaravelClickUpApi\Events\ClickUpEvent;
 
 class SpaceCreated extends ClickUpEvent
 {

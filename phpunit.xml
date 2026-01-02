@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.3/phpunit.xsd"
-    backupGlobals="false"
+    xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
     bootstrap="vendor/autoload.php"
-    colors="true"
-    processIsolation="false"
-    stopOnFailure="false"
-    executionOrder="random"
-    failOnWarning="true"
-    failOnRisky="true"
-    failOnEmptyTestSuite="true"
     beStrictAboutOutputDuringTests="true"
     cacheDirectory=".phpunit.cache"
-    backupStaticProperties="false"
+    colors="true"
+    failOnEmptyTestSuite="true"
+    failOnRisky="true"
+    failOnWarning="true"
 >
     <testsuites>
-        <testsuite name="Mindtwo Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Feature Tests">
+            <directory suffix="Test.php">./tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Unit Tests">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Vendor (Clickup API) Tests">
+            <directory suffix="Test.php">./tests/Vendor</directory>
         </testsuite>
     </testsuites>
     <coverage>
         <report>
+            <clover outputFile="build/logs/clover.xml"/>
             <html outputDirectory="build/coverage"/>
             <text outputFile="build/coverage.txt"/>
-            <clover outputFile="build/logs/clover.xml"/>
         </report>
     </coverage>
     <logging>

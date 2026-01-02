@@ -17,22 +17,27 @@
         }
     ],
     "require": {
-        "php": "^8.4",
-        "spatie/laravel-package-tools": "^1.16",
+        "php": "^8.2",
+        "spatie/laravel-package-tools": "^1.92",
         "illuminate/contracts": "^11.0||^12.0"
     },
     "require-dev": {
-        "laravel/pint": "^1.14",
-        "nunomaduro/collision": "^8.8",
-        "larastan/larastan": "^3.0",
-        "orchestra/testbench": "^10.0.0||^9.0.0",
-        "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-arch": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0",
+        "larastan/larastan": "^v3.8",
+        "laravel/pint": "^v1.25",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^v8.8",
+        "orchestra/testbench": "^10.0||^9.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-arch": "^3.0",
+        "pestphp/pest-plugin-faker": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "pestphp/pest-plugin-profanity": "^3.0",
+        "pestphp/pest-plugin-type-coverage": "^3.0",
+        "phpro/grumphp": "^2.17",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
-        "spatie/laravel-ray": "^1.35"
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
@@ -46,7 +51,12 @@
         }
     },
     "scripts": {
-        "post-autoload-dump": "@composer run prepare",
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "npm install",
+            "npm run build"
+        ],
         "clear": "@php vendor/bin/testbench package:purge-laravel-clickup-api --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "build": [
@@ -59,14 +69,27 @@
             "@php vendor/bin/testbench serve"
         ],
         "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "lint": [
+            "pint"
+        ],
+        "test": "vendor/bin/pest --no-coverage --parallel",
+        "test-coverage": "vendor/bin/pest --coverage --parallel",
+        "test-type-coverage": "vendor/bin/pest --type-coverage --parallel",
+        "test-profanity": "vendor/bin/pest --profanity --parallel",
+        "format": "vendor/bin/pint",
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@composer run prepare"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ]
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
+            "phpro/grumphp": true,
             "phpstan/extension-installer": true
         }
     },
@@ -76,7 +99,7 @@
                 "Mindtwo\\LaravelClickUpApi\\ClickUpApiServiceProvider"
             ],
             "aliases": {
-                "ClickUpClient": "Mindtwo\\LaravelClickUpApi\\ClickUpClient"
+                "ClickUpClient": "Mindtwo\\LaravelClickUpApi\\Facades\\ClickUpClient"
             }
         }
     },

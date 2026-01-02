@@ -5,7 +5,7 @@ on:
     paths:
       - '**.php'
       - '.github/workflows/run-tests.yml'
-      - 'phpunit.xml.dist'
+      - '../../phpunit.xml'
       - 'composer.json'
       - 'composer.lock'
 
@@ -57,4 +57,4 @@ jobs:
         run: composer show -D
 
       - name: Execute tests
-        run: vendor/bin/pest --ci
+        run: vendor/bin/pest --ci --no-coverage

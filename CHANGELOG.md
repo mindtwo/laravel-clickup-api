@@ -2,29 +2,48 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.0 - 2026-01-02
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/commits/2.0
+
+### What's Changed
+
+* Feature/sd 118384 extend capabilities by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/15
+
+### New Contributors
+
+* @Hysterikon made their first contribution in https://github.com/mindtwo/laravel-clickup-api/pull/15
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/commits/2.0
+
 ## [2.0.0] - 2025-12-31
 
 ### Breaking Changes
 
 #### Configuration File Renamed
+
 - **BREAKING**: Configuration file renamed from `config/clickup.php` to `config/clickup-api.php`
 - **Migration Path**: Users upgrading from 1.x must:
   1. Backup existing config: `cp config/clickup.php config/clickup.backup.php`
   2. Delete old config: `rm config/clickup.php`
   3. Publish new config: `php artisan vendor:publish --tag="clickup-api-config"`
   4. Copy values from backup to new config file
+  
 
 #### New Database Tables Required
+
 - **BREAKING**: New database migrations must be run
 - Publish migrations: `php artisan vendor:publish --tag="clickup-api-migrations"`
 - Run migrations: `php artisan migrate`
 - Two new tables will be created:
   - `clickup_webhooks` - Stores webhook registrations and health status
   - `clickup_webhook_deliveries` - Tracks webhook delivery history and idempotency
+  
 
 ### Added
 
 #### Webhook System
+
 - **NEW**: Complete webhook infrastructure with signature verification
 - **NEW**: `WebhookController` for handling incoming webhook events from ClickUp
 - **NEW**: `VerifyClickUpWebhookSignature` middleware for HMAC-SHA256 signature verification
@@ -33,6 +52,7 @@ All notable changes to `laravel-clickup-api` will be documented in this file.
 - **NEW**: Delivery tracking with status (received, processed, failed) and processing time metrics
 
 #### Webhook Health Monitoring
+
 - **NEW**: Automated webhook health monitoring system
 - **NEW**: `CheckWebhookHealth` job for periodic health status synchronization with ClickUp API (The package does not schedule the job itself, this has to be done by in your app)
 - **NEW**: Health status tracking: ACTIVE, FAILING, SUSPENDED
@@ -40,11 +60,13 @@ All notable changes to `laravel-clickup-api` will be documented in this file.
 - **NEW**: Fail count tracking for monitoring delivery success rates
 
 #### Webhook Recovery
+
 - **NEW**: `RecoverWebhookCommand` (php artisan clickup:webhook-recover) for manual webhook recovery
 - **NEW**: Support for recovering single webhook by ID or all failed/suspended webhooks with --all flag
 - **NEW**: Automatic fail count reset and webhook reactivation via ClickUp API
 
 #### Event System
+
 - **NEW**: 29+ dedicated event classes for different ClickUp webhook events
 - **NEW**: Event source tracking (WEBHOOK vs API)
 - **NEW**: Base `ClickUpEvent` class that all events extend
@@ -54,8 +76,10 @@ All notable changes to `laravel-clickup-api` will be documented in this file.
   - Time tracking: TaskTimeTrackedUpdated, TaskTimeEstimateUpdated
   - Organizational: FolderCreated, FolderUpdated, SpaceCreated, ListCreated
   - Goals: GoalCreated, GoalUpdated, KeyResultCreated, etc.
+  
 
 #### API Enhancements
+
 - **NEW**: `LazyResponseProxy` for flexible API call execution (immediate or queued)
 - **NEW**: `ClickUpApiCallJob` for queuing API calls
 - **NEW**: Rate limiting configuration (default: 100 requests/minute)
@@ -65,6 +89,7 @@ All notable changes to `laravel-clickup-api` will be documented in this file.
 - **NEW**: Tag and Views endpoints added
 
 #### Models & Database
+
 - **NEW**: `ClickUpWebhook` model with relationships and enum casting
 - **NEW**: `ClickUpWebhookDelivery` model for delivery history
 - **NEW**: `WebhookHealthStatus` enum (ACTIVE, FAILING, SUSPENDED)
@@ -74,6 +99,7 @@ All notable changes to `laravel-clickup-api` will be documented in this file.
 - **NEW**: Foreign key constraints with cascade deletion
 
 #### Developer Experience
+
 - **NEW**: `HandlesTask` trait for task-related helper methods
 - **NEW**: Comprehensive webhook security documentation in README
 - **NEW**: Detailed upgrade guide from 1.1 to 2.0.0
@@ -119,8 +145,8 @@ CLICKUP_DEFAULT_WORKSPACE_ID=your_workspace_id
 CLICKUP_API_CALLS_QUEUE=default
 CLICKUP_API_CALLS_CONNECTION=sync
 CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
-```
 
+```
 ### Upgrade Guide (1.x → 2.0.0)
 
 1. **Update composer.json**: `composer require mindtwo/laravel-clickup-api:^2.0`
@@ -137,6 +163,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    ```
 
 ### Security Notes
@@ -145,5 +172,6 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 - Failed signature verifications are logged with IP addresses for security monitoring
 - Webhook secrets are automatically captured and stored from ClickUp API responses
 - Always use HTTPS endpoints for webhooks to prevent man-in-the-middle attacks
+
 
 ---

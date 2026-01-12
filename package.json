@@ -19,7 +19,7 @@
     "@semantic-release/github": "^12.0.2",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
-    "glob": "^11.0.3",
+    "glob": "^13.0.0",
     "husky": "^9.1.7",
     "semantic-release": "^25.0.2"
   },

@@ -47,7 +47,7 @@ test('command recovers single webhook by id', function () {
 
     Log::shouldReceive('info')->once();
     Log::shouldReceive('error')->never();
-     // Allow channel() and other methods
+    // Allow channel() and other methods
 
     $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
         ->expectsOutput('Attempting to recover webhook: wh_123')
@@ -83,7 +83,6 @@ test('command recovers all failing webhooks', function () {
 
     Log::shouldReceive('info')->times(2);
     Log::shouldReceive('error')->never();
-
 
     $this->artisan('clickup:webhook-recover', ['--all' => true])
         ->expectsOutput('Found 2 webhook(s) to recover.')

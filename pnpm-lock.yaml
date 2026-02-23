@@ -22,8 +22,8 @@ importers:
         specifier: ^20.4.2
         version: 20.4.2
       '@commitlint/prompt-cli':
-        specifier: ^20.4.1
-        version: 20.4.1(@types/node@24.10.1)(typescript@5.9.3)
+        specifier: ^20.4.2
+        version: 20.4.2(@types/node@24.10.1)(typescript@5.9.3)
       '@semantic-release/changelog':
         specifier: ^6.0.3
         version: 6.0.3(semantic-release@25.0.3(typescript@5.9.3))
@@ -127,13 +127,13 @@ packages:
     resolution: {integrity: sha512-XNtZjeRcFuAfUnhYrCY02+mpxwY4OmnvD3ETbVPs25xJFFz1nRo/25nHj+5eM+zTeRFvWFwD4GXWU2JEtoK1/w==}
     engines: {node: '>=v18'}
 
-  '@commitlint/prompt-cli@20.4.1':
-    resolution: {integrity: sha512-5kivMX7Sq5PkxwTqhk/KmhKG52BHIoWvt2a6qY3g+9ZCls/lNjLw1HxMV+raeGk79K+eD/g/Tj+XWWkkzZkivA==}
+  '@commitlint/prompt-cli@20.4.2':
+    resolution: {integrity: sha512-WpawvoC0s+NoH6pZ75HTrwjRze0ZvrwkgoUlKT6FihmOGoPWX7cP7UZbM4pzx0LioxpHYyIt0FBpkH+gK0wcnA==}
     engines: {node: '>=v18'}
     hasBin: true
 
-  '@commitlint/prompt@20.4.1':
-    resolution: {integrity: sha512-dLXTdNnXiWyYPHM9a5gMpZrDTbjrwoJJGICD1aS4eCviw9yc8vNKoTytxR+oNb3xXS9i/0b4Ajhr1ALy996dMQ==}
+  '@commitlint/prompt@20.4.2':
+    resolution: {integrity: sha512-VLUm07fBE500E7u+29f7jg4LDbEQZpiKNlWhP5mB3Pz+AqqnSAK86u4jXKQItRSKcFFxZBvi0pvxJtDOQW1S5Q==}
     engines: {node: '>=v18'}
 
   '@commitlint/read@20.4.0':
@@ -1777,16 +1777,16 @@ snapshots:
       conventional-changelog-angular: 8.1.0
       conventional-commits-parser: 6.2.1
 
-  '@commitlint/prompt-cli@20.4.1(@types/node@24.10.1)(typescript@5.9.3)':
+  '@commitlint/prompt-cli@20.4.2(@types/node@24.10.1)(typescript@5.9.3)':
     dependencies:
-      '@commitlint/prompt': 20.4.1(@types/node@24.10.1)(typescript@5.9.3)
+      '@commitlint/prompt': 20.4.2(@types/node@24.10.1)(typescript@5.9.3)
       inquirer: 9.3.8(@types/node@24.10.1)
       tinyexec: 1.0.2
     transitivePeerDependencies:
       - '@types/node'
       - typescript
 
-  '@commitlint/prompt@20.4.1(@types/node@24.10.1)(typescript@5.9.3)':
+  '@commitlint/prompt@20.4.2(@types/node@24.10.1)(typescript@5.9.3)':
     dependencies:
       '@commitlint/ensure': 20.4.1
       '@commitlint/load': 20.4.0(@types/node@24.10.1)(typescript@5.9.3)

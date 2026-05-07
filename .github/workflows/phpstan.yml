@@ -1,7 +1,7 @@
 name: PHPStan
 
 on:
-  push:
+  pull_request:
     paths:
       - '**.php'
       - 'phpstan.neon.dist'
@@ -9,7 +9,7 @@ on:
 
 jobs:
   phpstan:
-    name: phpstan
+    name: phpstan (PHP 8.5)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

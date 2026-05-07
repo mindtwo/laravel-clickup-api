@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.2.0 - 2026-05-07
+
+### What's Changed
+
+* fix(phpstan-pipelines): change workflow to support checks for all sup… by @malu-m2 in https://github.com/mindtwo/laravel-clickup-api/pull/83
+* Bump actions/checkout from 5 to 6 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/14
+* Build(deps): bump dependabot/fetch-metadata from 2.5.0 to 3.1.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/71
+
+### New Contributors
+
+* @malu-m2 made their first contribution in https://github.com/mindtwo/laravel-clickup-api/pull/83
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/compare/2.1.1...2.2.0
+
 ## 2.1.1 - 2026-05-07
 
 ### What's Changed
@@ -228,6 +242,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 
 
 
+
 ```
 ### Upgrade Guide (1.x → 2.0.0)
 
@@ -245,6 +260,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    
    
    

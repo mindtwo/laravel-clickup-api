@@ -2,6 +2,44 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.0.2 - 2026-05-07
+
+### What's Changed
+
+* Bump phpstan/phpstan-phpunit from 2.0.15 to 2.0.16 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/47
+* Bump @semantic-release/github from 12.0.5 to 12.0.6 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/48
+* Bump dotenv from 17.2.4 to 17.3.1 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/49
+* Bump nunomaduro/collision from 8.8.3 to 8.9.1 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/50
+* Bump spatie/laravel-package-tools from 1.92.7 to 1.93.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/51
+* Bump @commitlint/cli from 20.4.1 to 20.4.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/52
+* Bump glob from 13.0.3 to 13.0.6 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/54
+* Bump @commitlint/config-conventional from 20.4.1 to 20.4.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/53
+* Bump @commitlint/prompt-cli from 20.4.1 to 20.4.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/55
+* Bump larastan/larastan from 3.9.2 to 3.9.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/56
+* Bump @commitlint/prompt-cli from 20.4.2 to 20.4.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/57
+* Bump @commitlint/config-conventional from 20.4.2 to 20.4.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/58
+* Bump @commitlint/cli from 20.4.2 to 20.4.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/59
+* Bump laravel/pint from 1.27.1 to 1.29.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/61
+* Bump @commitlint/config-conventional from 20.4.3 to 20.5.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/62
+* Bump @commitlint/cli from 20.4.3 to 20.5.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/63
+* Bump @commitlint/prompt-cli from 20.4.3 to 20.5.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/64
+* Bump nunomaduro/collision from 8.9.1 to 8.9.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/66
+* Bump dotenv from 17.3.1 to 17.4.1 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/67
+* Build(deps-dev): bump larastan/larastan from 3.9.3 to 3.9.4 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/68
+* Build(deps-dev): bump dotenv from 17.4.1 to 17.4.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/70
+* Build(deps-dev): bump phpro/grumphp from 2.19.0 to 2.20.0 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/72
+* Build(deps-dev): bump larastan/larastan from 3.9.4 to 3.9.6 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/73
+* Build(deps-dev): bump nunomaduro/collision from 8.9.2 to 8.9.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/69
+* Build(deps-dev): bump laravel/pint from 1.29.0 to 1.29.1 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/74
+* Build(deps-dev): bump @commitlint/prompt-cli from 20.5.0 to 20.5.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/76
+* Build(deps-dev): bump @commitlint/cli from 20.5.0 to 20.5.2 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/77
+* Build(deps-dev): bump @commitlint/prompt-cli from 20.5.2 to 20.5.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/78
+* Build(deps-dev): bump @commitlint/cli from 20.5.2 to 20.5.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/79
+* Build(deps-dev): bump @commitlint/config-conventional from 20.5.0 to 20.5.3 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/80
+* chore(deps): update package dependencies and added support for Laravel 13 by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/81
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/compare/2.0.1...2.0.2
+
 ## 2.0.1 - 2026-02-13
 
 ### What's Changed
@@ -180,6 +218,7 @@ CLICKUP_API_CALLS_CONNECTION=sync
 CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 
 
+
 ```
 ### Upgrade Guide (1.x → 2.0.0)
 
@@ -197,6 +236,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    
    
    ```

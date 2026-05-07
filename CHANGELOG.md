@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.1.1 - 2026-05-07
+
+### What's Changed
+
+* chore(deps): update package dependencies and added support for Larave… by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/82
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/compare/2.1.0...2.1.1
+
 ## 2.0.2 - 2026-05-07
 
 ### What's Changed
@@ -219,6 +227,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 
 
 
+
 ```
 ### Upgrade Guide (1.x → 2.0.0)
 
@@ -236,6 +245,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    
    
    

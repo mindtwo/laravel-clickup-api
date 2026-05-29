@@ -311,6 +311,137 @@ test('job handles webhooks with missing fail count', function () {
     expect($webhook->fail_count)->toBe(0);
 });
 
+test('auto_restore re-asserts required events for each managed target', function () {
+    config([
+        'clickup-api.webhook.auto_restore'    => true,
+        'clickup-api.webhook.required_events' => ['taskCreated', 'taskDeleted'],
+    ]);
+
+    ClickUpWebhook::create([
+        'clickup_webhook_id' => 'wh_space',
+        'endpoint'           => 'https://app.test/webhooks/clickup',
+        'event'              => 'taskCreated',
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+        'secret'             => 'test-secret',
+        'is_active'          => true,
+        'health_status'      => WebhookHealthStatus::ACTIVE,
+    ]);
+
+    $response = Mockery::mock(LazyResponseProxy::class);
+    $response->shouldReceive('status')->andReturn(200);
+    $response->shouldReceive('json')->andReturn(['webhooks' => []]);
+
+    $webhooksEndpoint = Mockery::mock(Webhooks::class);
+    $webhooksEndpoint->shouldReceive('index')->with('workspace_123')->once()->andReturn($response);
+    $webhooksEndpoint->shouldReceive('ensureManaged')
+        ->once()
+        ->with('workspace_123', Mockery::on(function ($desired) {
+            return is_array($desired)
+                && count($desired) === 2
+                && ($desired[0]['space_id'] ?? null) === 's1'
+                && in_array('taskCreated', $desired[0]['events'], true)
+                && in_array('taskDeleted', $desired[1]['events'], true);
+        }))
+        ->andReturn(collect());
+
+    Log::shouldReceive('info')->andReturnNull();
+    Log::shouldReceive('debug')->andReturnNull();
+    Log::shouldReceive('warning')->andReturnNull();
+
+    (new CheckWebhookHealth)->handle($webhooksEndpoint);
+});
+
+test('auto_restore disabled (default) does not call ensureManaged', function () {
+    ClickUpWebhook::create([
+        'clickup_webhook_id' => 'wh_space',
+        'endpoint'           => 'https://app.test/webhooks/clickup',
+        'event'              => 'taskCreated',
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+        'secret'             => 'test-secret',
+        'is_active'          => true,
+        'health_status'      => WebhookHealthStatus::ACTIVE,
+    ]);
+
+    $response = Mockery::mock(LazyResponseProxy::class);
+    $response->shouldReceive('status')->andReturn(200);
+    $response->shouldReceive('json')->andReturn(['webhooks' => []]);
+
+    $webhooksEndpoint = Mockery::mock(Webhooks::class);
+    $webhooksEndpoint->shouldReceive('index')->with('workspace_123')->once()->andReturn($response);
+    $webhooksEndpoint->shouldReceive('ensureManaged')->never();
+
+    Log::shouldReceive('info')->andReturnNull();
+    Log::shouldReceive('debug')->andReturnNull();
+
+    (new CheckWebhookHealth)->handle($webhooksEndpoint);
+});
+
+test('job marks recovery when clickup reactivates a failing webhook', function () {
+    $webhook = createHealthTestWebhook('wh_123', WebhookHealthStatus::FAILING);
+    $webhook->update([
+        'is_active'                        => false,
+        'fail_count'                       => 50,
+        'deliveries_since_recovery'        => 80,
+        'failed_deliveries_since_recovery' => 60,
+        'recovery_count'                   => 1,
+        'last_error'                       => ['error' => 'boom'],
+    ]);
+
+    $webhooksEndpoint = mockHealthTestWebhooksEndpoint([
+        [
+            'id'         => 'wh_123',
+            'status'     => 'active',
+            'fail_count' => 0,
+        ],
+    ]);
+
+    Log::shouldReceive('info')->times(3); // start + recovery + completion
+    Log::shouldReceive('debug')->once();
+    Log::shouldReceive('warning')->once(); // status change
+
+    $job = new CheckWebhookHealth;
+    $job->handle($webhooksEndpoint);
+
+    $webhook->refresh();
+    expect($webhook->health_status)->toBe(WebhookHealthStatus::ACTIVE)
+        ->and($webhook->is_active)->toBeTrue()
+        ->and($webhook->fail_count)->toBe(0)
+        ->and($webhook->deliveries_since_recovery)->toBe(0)
+        ->and($webhook->failed_deliveries_since_recovery)->toBe(0)
+        ->and($webhook->recovery_count)->toBe(2)
+        ->and($webhook->recovered_at)->not->toBeNull()
+        ->and($webhook->last_error)->toBeNull();
+});
+
+test('job does not mark recovery when webhook stays active', function () {
+    $webhook = createHealthTestWebhook('wh_123', WebhookHealthStatus::ACTIVE);
+    $webhook->update([
+        'deliveries_since_recovery' => 30,
+        'recovery_count'            => 1,
+    ]);
+
+    $webhooksEndpoint = mockHealthTestWebhooksEndpoint([
+        [
+            'id'         => 'wh_123',
+            'status'     => 'active',
+            'fail_count' => 0,
+        ],
+    ]);
+
+    Log::shouldReceive('info')->twice();
+    Log::shouldReceive('debug')->once();
+
+    $job = new CheckWebhookHealth;
+    $job->handle($webhooksEndpoint);
+
+    $webhook->refresh();
+    expect($webhook->recovery_count)->toBe(1)
+        ->and($webhook->deliveries_since_recovery)->toBe(30)
+        ->and($webhook->recovered_at)->toBeNull();
+});
+
 /**
  * Create a test webhook in the database.
  */

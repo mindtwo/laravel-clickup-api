@@ -64,25 +64,79 @@ test('webhook casts last error to array', function () {
 });
 
 test('record delivery increments counter and updates timestamp', function () {
-    $webhook = createModelTestWebhook(['total_deliveries' => 5]);
+    $webhook = createModelTestWebhook([
+        'total_deliveries'          => 5,
+        'deliveries_since_recovery' => 2,
+    ]);
 
     $webhook->recordDelivery();
 
     $webhook->refresh();
     expect($webhook->total_deliveries)->toBe(6);
+    expect($webhook->deliveries_since_recovery)->toBe(3);
     expect($webhook->last_triggered_at)->not->toBeNull();
 });
 
 test('record failure increments counter and stores error', function () {
-    $webhook = createModelTestWebhook(['failed_deliveries' => 2]);
+    $webhook = createModelTestWebhook([
+        'failed_deliveries'                => 2,
+        'failed_deliveries_since_recovery' => 1,
+    ]);
 
     $webhook->recordFailure('Test error message');
 
     $webhook->refresh();
     expect($webhook->failed_deliveries)->toBe(3);
+    expect($webhook->failed_deliveries_since_recovery)->toBe(2);
     expect($webhook->last_error)->toBeArray();
     expect($webhook->last_error['error'])->toBe('Test error message');
     expect($webhook->last_error)->toHaveKey('timestamp');
+});
+
+test('mark recovered restores health and resets recovery-relative stats', function () {
+    $webhook = createModelTestWebhook([
+        'health_status'                    => WebhookHealthStatus::SUSPENDED,
+        'is_active'                        => false,
+        'fail_count'                       => 100,
+        'total_deliveries'                 => 500,
+        'failed_deliveries'                => 300,
+        'deliveries_since_recovery'        => 120,
+        'failed_deliveries_since_recovery' => 100,
+        'recovery_count'                   => 3,
+        'last_error'                       => ['error' => 'boom'],
+    ]);
+
+    $webhook->markRecovered();
+
+    $webhook->refresh();
+    expect($webhook->health_status)->toBe(WebhookHealthStatus::ACTIVE)
+        ->and($webhook->is_active)->toBeTrue()
+        ->and($webhook->fail_count)->toBe(0)
+        ->and($webhook->deliveries_since_recovery)->toBe(0)
+        ->and($webhook->failed_deliveries_since_recovery)->toBe(0)
+        ->and($webhook->recovery_count)->toBe(4)
+        ->and($webhook->recovered_at)->not->toBeNull()
+        ->and($webhook->last_error)->toBeNull()
+        ->and($webhook->total_deliveries)->toBe(500)
+        ->and($webhook->failed_deliveries)->toBe(300);
+});
+
+test('failure rate since recovery calculates correctly', function () {
+    $webhook = createModelTestWebhook([
+        'deliveries_since_recovery'        => 50,
+        'failed_deliveries_since_recovery' => 10,
+    ]);
+
+    expect($webhook->failure_rate_since_recovery)->toBe(20.0);
+});
+
+test('failure rate since recovery returns zero for no deliveries', function () {
+    $webhook = createModelTestWebhook([
+        'deliveries_since_recovery'        => 0,
+        'failed_deliveries_since_recovery' => 0,
+    ]);
+
+    expect($webhook->failure_rate_since_recovery)->toBe(0.0);
 });
 
 test('failure rate attribute calculates correctly', function () {

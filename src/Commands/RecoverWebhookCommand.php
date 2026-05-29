@@ -131,11 +131,7 @@ class RecoverWebhookCommand extends Command
             ]);
 
             if ($response->status() === 200) {
-                $webhook->update([
-                    'health_status' => WebhookHealthStatus::ACTIVE,
-                    'is_active'     => true,
-                    'fail_count'    => 0,
-                ]);
+                $webhook->markRecovered();
 
                 $this->info("  ✓ Successfully recovered webhook {$webhook->clickup_webhook_id}");
 

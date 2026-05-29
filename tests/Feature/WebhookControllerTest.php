@@ -111,6 +111,8 @@ test('webhook updates delivery counters', function () {
     $webhook->refresh();
     expect($webhook->total_deliveries)->toBe(2);
     expect($webhook->failed_deliveries)->toBe(0);
+    expect($webhook->deliveries_since_recovery)->toBe(2);
+    expect($webhook->failed_deliveries_since_recovery)->toBe(0);
 });
 
 test('webhook returns 404 for inactive webhook', function () {
@@ -156,6 +158,7 @@ test('webhook handles processing errors gracefully', function () {
     // Verify webhook failure was recorded
     $webhook->refresh();
     expect($webhook->failed_deliveries)->toBe(1);
+    expect($webhook->failed_deliveries_since_recovery)->toBe(1);
     expect($webhook->last_error)->not->toBeNull();
 });
 

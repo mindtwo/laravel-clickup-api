@@ -25,12 +25,17 @@ use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
  * @property Carbon|null $last_triggered_at
  * @property int $total_deliveries
  * @property int $failed_deliveries
+ * @property int $deliveries_since_recovery
+ * @property int $failed_deliveries_since_recovery
+ * @property int $recovery_count
+ * @property Carbon|null $recovered_at
  * @property array<string, mixed>|null $last_error
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read float $failure_rate
+ * @property-read float $failure_rate_since_recovery
  */
 class ClickUpWebhook extends Model
 {
@@ -52,19 +57,27 @@ class ClickUpWebhook extends Model
         'last_triggered_at',
         'total_deliveries',
         'failed_deliveries',
+        'deliveries_since_recovery',
+        'failed_deliveries_since_recovery',
+        'recovery_count',
+        'recovered_at',
         'last_error',
         'is_active',
     ];
 
     protected $casts = [
-        'last_triggered_at' => 'datetime',
-        'health_checked_at' => 'datetime',
-        'health_status'     => WebhookHealthStatus::class,
-        'last_error'        => 'array',
-        'is_active'         => 'boolean',
-        'total_deliveries'  => 'integer',
-        'failed_deliveries' => 'integer',
-        'fail_count'        => 'integer',
+        'last_triggered_at'                => 'datetime',
+        'health_checked_at'                => 'datetime',
+        'recovered_at'                     => 'datetime',
+        'health_status'                    => WebhookHealthStatus::class,
+        'last_error'                       => 'array',
+        'is_active'                        => 'boolean',
+        'total_deliveries'                 => 'integer',
+        'failed_deliveries'                => 'integer',
+        'deliveries_since_recovery'        => 'integer',
+        'failed_deliveries_since_recovery' => 'integer',
+        'recovery_count'                   => 'integer',
+        'fail_count'                       => 'integer',
     ];
 
     /**
@@ -81,6 +94,7 @@ class ClickUpWebhook extends Model
     public function recordDelivery(): void
     {
         $this->increment('total_deliveries');
+        $this->increment('deliveries_since_recovery');
         $this->update(['last_triggered_at' => now()]);
     }
 
@@ -90,11 +104,33 @@ class ClickUpWebhook extends Model
     public function recordFailure(string $error): void
     {
         $this->increment('failed_deliveries');
+        $this->increment('failed_deliveries_since_recovery');
         $this->update([
             'last_error' => [
                 'error'     => $error,
                 'timestamp' => now()->toIso8601String(),
             ],
+        ]);
+    }
+
+    /**
+     * Mark this webhook as recovered, restoring it to a healthy state and
+     * resetting the recovery-relative counters while preserving lifetime totals.
+     *
+     * Called both by the manual recovery command and by the health check job
+     * when ClickUp reports a previously failing/suspended webhook as active again.
+     */
+    public function markRecovered(): void
+    {
+        $this->update([
+            'health_status'                    => WebhookHealthStatus::ACTIVE,
+            'is_active'                        => true,
+            'fail_count'                       => 0,
+            'deliveries_since_recovery'        => 0,
+            'failed_deliveries_since_recovery' => 0,
+            'last_error'                       => null,
+            'recovered_at'                     => now(),
+            'recovery_count'                   => $this->recovery_count + 1,
         ]);
     }
 
@@ -108,6 +144,18 @@ class ClickUpWebhook extends Model
         }
 
         return ($this->failed_deliveries / $this->total_deliveries) * 100;
+    }
+
+    /**
+     * Get the failure rate of this webhook since its last recovery.
+     */
+    public function getFailureRateSinceRecoveryAttribute(): float
+    {
+        if ($this->deliveries_since_recovery === 0) {
+            return 0.0;
+        }
+
+        return ($this->failed_deliveries_since_recovery / $this->deliveries_since_recovery) * 100;
     }
 
     /**

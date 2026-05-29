@@ -315,7 +315,7 @@ class Webhooks
      */
     private function findManagedWebhook(string $targetType, string $targetId, array $events): ?ClickUpWebhook
     {
-        /** @var ClickUpWebhook */
+        /** @var ClickUpWebhook|null */
         return ClickUpWebhook::query()
             ->where('target_type', $targetType)
             ->where('target_id', $targetId)

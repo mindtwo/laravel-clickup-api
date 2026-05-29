@@ -378,6 +378,70 @@ test('auto_restore disabled (default) does not call ensureManaged', function () 
     (new CheckWebhookHealth)->handle($webhooksEndpoint);
 });
 
+test('job marks recovery when clickup reactivates a failing webhook', function () {
+    $webhook = createHealthTestWebhook('wh_123', WebhookHealthStatus::FAILING);
+    $webhook->update([
+        'is_active'                        => false,
+        'fail_count'                       => 50,
+        'deliveries_since_recovery'        => 80,
+        'failed_deliveries_since_recovery' => 60,
+        'recovery_count'                   => 1,
+        'last_error'                       => ['error' => 'boom'],
+    ]);
+
+    $webhooksEndpoint = mockHealthTestWebhooksEndpoint([
+        [
+            'id'         => 'wh_123',
+            'status'     => 'active',
+            'fail_count' => 0,
+        ],
+    ]);
+
+    Log::shouldReceive('info')->times(3); // start + recovery + completion
+    Log::shouldReceive('debug')->once();
+    Log::shouldReceive('warning')->once(); // status change
+
+    $job = new CheckWebhookHealth;
+    $job->handle($webhooksEndpoint);
+
+    $webhook->refresh();
+    expect($webhook->health_status)->toBe(WebhookHealthStatus::ACTIVE)
+        ->and($webhook->is_active)->toBeTrue()
+        ->and($webhook->fail_count)->toBe(0)
+        ->and($webhook->deliveries_since_recovery)->toBe(0)
+        ->and($webhook->failed_deliveries_since_recovery)->toBe(0)
+        ->and($webhook->recovery_count)->toBe(2)
+        ->and($webhook->recovered_at)->not->toBeNull()
+        ->and($webhook->last_error)->toBeNull();
+});
+
+test('job does not mark recovery when webhook stays active', function () {
+    $webhook = createHealthTestWebhook('wh_123', WebhookHealthStatus::ACTIVE);
+    $webhook->update([
+        'deliveries_since_recovery' => 30,
+        'recovery_count'            => 1,
+    ]);
+
+    $webhooksEndpoint = mockHealthTestWebhooksEndpoint([
+        [
+            'id'         => 'wh_123',
+            'status'     => 'active',
+            'fail_count' => 0,
+        ],
+    ]);
+
+    Log::shouldReceive('info')->twice();
+    Log::shouldReceive('debug')->once();
+
+    $job = new CheckWebhookHealth;
+    $job->handle($webhooksEndpoint);
+
+    $webhook->refresh();
+    expect($webhook->recovery_count)->toBe(1)
+        ->and($webhook->deliveries_since_recovery)->toBe(30)
+        ->and($webhook->recovered_at)->toBeNull();
+});
+
 /**
  * Create a test webhook in the database.
  */

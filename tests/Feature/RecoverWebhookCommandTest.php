@@ -249,6 +249,44 @@ test('command resets fail count on recovery', function () {
     expect($webhook->fail_count)->toBe(0);
 });
 
+test('command resets recovery-relative stats and clears last error on recovery', function () {
+    $webhook = createCommandTestWebhook([
+        'clickup_webhook_id'               => 'wh_123',
+        'health_status'                    => WebhookHealthStatus::FAILING,
+        'is_active'                        => false,
+        'fail_count'                       => 75,
+        'total_deliveries'                 => 1000,
+        'failed_deliveries'                => 400,
+        'deliveries_since_recovery'        => 120,
+        'failed_deliveries_since_recovery' => 90,
+        'recovery_count'                   => 2,
+        'last_error'                       => ['error' => 'boom', 'timestamp' => '2026-01-01T00:00:00+00:00'],
+    ]);
+
+    $response = mockCommandTestSuccessResponse();
+
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_123', Mockery::any())
+        ->andReturn($response);
+
+    $this->instance(Webhooks::class, $mock);
+
+    $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_123'])
+        ->assertExitCode(0);
+
+    $webhook->refresh();
+
+    expect($webhook->deliveries_since_recovery)->toBe(0)
+        ->and($webhook->failed_deliveries_since_recovery)->toBe(0)
+        ->and($webhook->recovery_count)->toBe(3)
+        ->and($webhook->recovered_at)->not->toBeNull()
+        ->and($webhook->last_error)->toBeNull()
+        ->and($webhook->total_deliveries)->toBe(1000)
+        ->and($webhook->failed_deliveries)->toBe(400);
+});
+
 test('command recovers all with mixed results', function () {
     // Log::spy();
 

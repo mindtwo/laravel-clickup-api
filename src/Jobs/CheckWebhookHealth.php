@@ -168,6 +168,19 @@ class CheckWebhookHealth implements ShouldQueue
                 'status'     => $newStatus->value,
                 'fail_count' => $webhook->fail_count,
             ]);
+
+            return;
+        }
+
+        // ClickUp reactivated a previously failing/suspended webhook on its own:
+        // treat it as a recovery so the recovery-relative counters reset too.
+        if ($previousStatus?->needsRecovery() && $newStatus === WebhookHealthStatus::ACTIVE) {
+            $webhook->markRecovered();
+
+            Log::info('Webhook recovered via ClickUp-side reactivation', [
+                'webhook_id'     => $webhook->clickup_webhook_id,
+                'recovery_count' => $webhook->recovery_count,
+            ]);
         }
     }
 

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskUpdated;
+use Mindtwo\LaravelClickUpApi\Exceptions\ClickUpApiCallFailedException;
 use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
 
 uses()->group('clickup-api-call-job');
@@ -73,4 +74,38 @@ test('failed handler emits a failure completion event for no-response failures',
 
 test('backoff is exponential', function () {
     expect((new ClickUpApiCallJob('/task/abc', 'GET'))->backoff())->toBe([10, 30, 60, 120]);
+});
+
+test('failure exception exposes context and a descriptive message', function () {
+    $exception = new ClickUpApiCallFailedException('/task/x', 'PUT', 400, ['err' => 'Bad request']);
+
+    expect($exception->endpoint)->toBe('/task/x')
+        ->and($exception->method)->toBe('PUT')
+        ->and($exception->statusCode)->toBe(400)
+        ->and($exception->response)->toBe(['err' => 'Bad request'])
+        ->and($exception->getMessage())->toContain('400')
+        ->and($exception->getMessage())->toContain('Bad request');
+});
+
+test('failure exception is built from a response', function () {
+    Http::fake(['*' => Http::response(['err' => 'Not found'], 404)]);
+
+    $response = Http::get('https://example.test/task/gone');
+
+    $exception = ClickUpApiCallFailedException::fromResponse('/task/gone', 'GET', $response);
+
+    expect($exception->endpoint)->toBe('/task/gone')
+        ->and($exception->method)->toBe('GET')
+        ->and($exception->statusCode)->toBe(404)
+        ->and($exception->response)->toBe(['err' => 'Not found']);
+});
+
+test('failed handler does not re-dispatch for a terminal API failure exception', function () {
+    Event::fake([ClickUpApiCallCompleted::class]);
+
+    (new ClickUpApiCallJob('/task/x', 'GET'))->failed(
+        new ClickUpApiCallFailedException('/task/x', 'GET', 404, ['err' => 'Not found']),
+    );
+
+    Event::assertNotDispatched(ClickUpApiCallCompleted::class);
 });

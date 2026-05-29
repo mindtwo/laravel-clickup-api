@@ -96,6 +96,17 @@ return [
 
         // Middleware to apply to the webhook route
         'middleware' => ['api'],
+
+        // Event types that must always have an active webhook registered.
+        // Webhooks::ensureManaged() uses this as the baseline coverage so a
+        // dropped or suspended required webhook (e.g. taskDeleted) is restored
+        // instead of silently leaving the application blind to those events.
+        'required_events' => [
+            'taskCreated',
+            'taskUpdated',
+            'taskStatusUpdated',
+            'taskDeleted',
+        ],
     ],
 
     /*

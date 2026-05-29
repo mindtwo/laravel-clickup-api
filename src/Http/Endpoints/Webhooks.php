@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi\Http\Endpoints;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Enums\WebhookHealthStatus;
 use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
@@ -244,6 +245,160 @@ class Webhooks
         }
 
         return $synced;
+    }
+
+    /**
+     * Ensure the desired set of managed webhooks exists and is active in ClickUp.
+     *
+     * For every desired specification this guarantees an active webhook covering
+     * the given target and events by, in order of preference:
+     *   1. leaving an already-active matching webhook untouched,
+     *   2. reactivating a matching webhook that exists but is inactive,
+     *   3. recreating it when ClickUp no longer knows the webhook (update 404),
+     *   4. creating a brand-new webhook when none covers the target + events.
+     *
+     * This closes the gap where a required event-type webhook (e.g. taskDeleted)
+     * is silently dropped or suspended and never restored, which leaves the
+     * application blind to those events.
+     *
+     * @param int|string $workspaceId The workspace the webhooks belong to
+     * @param array<int, array<string, mixed>> $desired List of specs, each with an
+     *                                                  `events` array plus optional `endpoint`
+     *                                                  and a target key (space_id/folder_id/list_id/task_id)
+     *
+     * @return Collection<int, ClickUpWebhook> The ensured webhooks
+     */
+    public function ensureManaged(int|string $workspaceId, array $desired): Collection
+    {
+        $ensured = collect();
+
+        foreach ($desired as $spec) {
+            /** @var array<int, string> $events */
+            $events = array_values(array_unique($spec['events'] ?? []));
+
+            if (empty($events)) {
+                continue;
+            }
+
+            [$targetType, $targetId] = $this->determineTarget($workspaceId, $spec);
+
+            $existing = $this->findManagedWebhook($targetType, (string) $targetId, $events);
+
+            if ($existing && $existing->is_active && $existing->health_status === WebhookHealthStatus::ACTIVE) {
+                $ensured->push($existing);
+
+                continue;
+            }
+
+            if ($existing) {
+                $ensured->push($this->reactivateOrRecreate($workspaceId, $existing, $spec, $events));
+
+                continue;
+            }
+
+            Log::info('Creating missing managed ClickUp webhook', [
+                'target_type' => $targetType,
+                'target_id'   => (string) $targetId,
+                'events'      => $events,
+            ]);
+
+            $ensured->push($this->createManaged($workspaceId, $spec));
+        }
+
+        return $ensured;
+    }
+
+    /**
+     * Find a managed webhook for the given target whose event list covers all desired events.
+     *
+     * @param array<int, string> $events
+     */
+    private function findManagedWebhook(string $targetType, string $targetId, array $events): ?ClickUpWebhook
+    {
+        /** @var ClickUpWebhook */
+        return ClickUpWebhook::query()
+            ->where('target_type', $targetType)
+            ->where('target_id', $targetId)
+            ->get()
+            ->first(function (ClickUpWebhook $webhook) use ($events): bool {
+                $covered = array_filter(array_map('trim', explode(',', (string) $webhook->event)));
+
+                // A wildcard webhook covers every event type.
+                if (in_array('*', $covered, true)) {
+                    return true;
+                }
+
+                return empty(array_diff($events, $covered));
+            });
+    }
+
+    /**
+     * Reactivate an inactive webhook, or recreate it when ClickUp has dropped it.
+     *
+     * @param array<string, mixed> $spec
+     * @param array<int, string> $events
+     */
+    private function reactivateOrRecreate(int|string $workspaceId, ClickUpWebhook $webhook, array $spec, array $events): ClickUpWebhook
+    {
+        $endpoint = $spec['endpoint'] ?? $webhook->endpoint ?? $this->defaultEndpoint();
+
+        // A managed row without an upstream ID was never really registered - recreate it.
+        if (empty($webhook->clickup_webhook_id)) {
+            $webhook->delete();
+
+            return $this->createManaged($workspaceId, $spec);
+        }
+
+        $response = $this->update($webhook->clickup_webhook_id, [
+            'endpoint' => $endpoint,
+            'events'   => $events,
+            'status'   => 'active',
+        ]);
+
+        if ($response->status() === 200) {
+            $webhook->update([
+                'endpoint'      => $endpoint,
+                'event'         => implode(',', $events),
+                'health_status' => WebhookHealthStatus::ACTIVE,
+                'is_active'     => true,
+                'fail_count'    => 0,
+            ]);
+
+            Log::info('Reactivated managed ClickUp webhook', [
+                'webhook_id' => $webhook->clickup_webhook_id,
+                'events'     => $events,
+            ]);
+
+            $webhook->refresh();
+
+            return $webhook;
+        }
+
+        if ($response->status() === 404) {
+            // The webhook no longer exists in ClickUp - drop the stale row and recreate it.
+            Log::warning('Managed ClickUp webhook missing upstream, recreating', [
+                'webhook_id' => $webhook->clickup_webhook_id,
+                'events'     => $events,
+            ]);
+
+            $webhook->delete();
+
+            return $this->createManaged($workspaceId, $spec);
+        }
+
+        $error = $response->json()['err'] ?? 'Unknown error';
+        throw new RuntimeException("ClickUp Api call failed: {$error}");
+    }
+
+    /**
+     * Build the default webhook endpoint URL from configuration.
+     */
+    private function defaultEndpoint(): string
+    {
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $webhookPath = config('clickup-api.webhook.path', '/webhooks/clickup');
+
+        return $appUrl.$webhookPath;
     }
 
     /**

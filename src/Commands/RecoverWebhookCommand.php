@@ -147,6 +147,11 @@ class RecoverWebhookCommand extends Command
                 return true;
             }
 
+            // ClickUp has deleted the webhook upstream - it cannot be updated, only recreated.
+            if ($response->status() === 404) {
+                return $this->recreateWebhook($webhook, $webhooksEndpoint);
+            }
+
             /* @var array<string, mixed> $responseJson */
             $responseJson = $response->json();
             if (is_array($responseJson)) {
@@ -162,6 +167,65 @@ class RecoverWebhookCommand extends Command
             $this->error("  ✗ Error recovering webhook: {$e->getMessage()}");
 
             Log::error('Webhook recovery command failed', [
+                'webhook_id' => $webhook->clickup_webhook_id,
+                'error'      => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Recreate a webhook that ClickUp has deleted upstream, preserving its target scoping.
+     */
+    protected function recreateWebhook(ClickUpWebhook $webhook, Webhooks $webhooksEndpoint): bool
+    {
+        $workspaceId = config('clickup-api.default_workspace_id');
+
+        if (empty($workspaceId)) {
+            $this->error('  ✗ Cannot recreate webhook: no default workspace configured.');
+
+            return false;
+        }
+
+        $data = [
+            'endpoint' => $webhook->endpoint,
+            'events'   => explode(',', $webhook->event),
+        ];
+
+        // Re-apply the original target scoping so the new webhook watches the same resource.
+        $targetKey = match ($webhook->target_type) {
+            'space'  => 'space_id',
+            'folder' => 'folder_id',
+            'list'   => 'list_id',
+            'task'   => 'task_id',
+            default  => null,
+        };
+
+        if ($targetKey !== null) {
+            $data[$targetKey] = $webhook->target_id;
+        }
+
+        try {
+            $newWebhook = $webhooksEndpoint->createManaged($workspaceId, $data);
+
+            // Remove the stale row that pointed at the now-deleted ClickUp webhook.
+            $oldClickUpId = $webhook->clickup_webhook_id;
+            $webhook->delete();
+
+            $this->info("  ✓ Recreated webhook (old {$oldClickUpId} -> new {$newWebhook->clickup_webhook_id})");
+
+            Log::info('Webhook recreated via command after upstream deletion', [
+                'old_webhook_id' => $oldClickUpId,
+                'new_webhook_id' => $newWebhook->clickup_webhook_id,
+                'endpoint'       => $newWebhook->endpoint,
+            ]);
+
+            return true;
+        } catch (Throwable $e) {
+            $this->error("  ✗ Failed to recreate webhook: {$e->getMessage()}");
+
+            Log::error('Webhook recreation command failed', [
                 'webhook_id' => $webhook->clickup_webhook_id,
                 'error'      => $e->getMessage(),
             ]);

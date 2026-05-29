@@ -171,6 +171,51 @@ test('command handles exceptions gracefully', function () {
     expect($webhook->health_status)->toBe(WebhookHealthStatus::FAILING);
 });
 
+test('command recreates webhook deleted in clickup', function () {
+    config(['clickup-api.default_workspace_id' => 'ws_1']);
+
+    $webhook = createCommandTestWebhook([
+        'clickup_webhook_id' => 'wh_gone',
+        'health_status'      => WebhookHealthStatus::SUSPENDED,
+        'is_active'          => false,
+        'fail_count'         => 100,
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+    ]);
+
+    $updateResponse = Mockery::mock(LazyResponseProxy::class);
+    $updateResponse->shouldReceive('status')->andReturn(404);
+    $updateResponse->shouldReceive('json')->andReturn(['err' => 'Webhook not found']);
+
+    $newWebhook = createCommandTestWebhook([
+        'clickup_webhook_id' => 'wh_new',
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+    ]);
+
+    $mock = Mockery::mock(Webhooks::class);
+    $mock->shouldReceive('update')
+        ->once()
+        ->with('wh_gone', Mockery::any())
+        ->andReturn($updateResponse);
+    $mock->shouldReceive('createManaged')
+        ->once()
+        ->with('ws_1', Mockery::on(function ($data) {
+            return ($data['space_id'] ?? null) === 's1'
+                && is_array($data['events']);
+        }))
+        ->andReturn($newWebhook);
+
+    $this->instance(Webhooks::class, $mock);
+
+    $this->artisan('clickup:webhook-recover', ['webhook_id' => 'wh_gone'])
+        ->expectsOutput('  ✓ Recreated webhook (old wh_gone -> new wh_new)')
+        ->assertExitCode(0);
+
+    expect(ClickUpWebhook::where('clickup_webhook_id', 'wh_gone')->exists())->toBeFalse()
+        ->and(ClickUpWebhook::where('clickup_webhook_id', 'wh_gone')->withTrashed()->exists())->toBeTrue();
+});
+
 test('command resets fail count on recovery', function () {
     // Log::spy();
 

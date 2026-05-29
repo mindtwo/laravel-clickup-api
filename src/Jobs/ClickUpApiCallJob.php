@@ -19,6 +19,7 @@ use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskCreated;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskDeleted;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskUpdated;
+use Mindtwo\LaravelClickUpApi\Exceptions\ClickUpApiCallFailedException;
 use Symfony\Component\HttpFoundation\Request;
 use Throwable;
 
@@ -115,6 +116,10 @@ class ClickUpApiCallJob implements ShouldQueue
             'status'   => $status,
             'error'    => $response->json()['err'] ?? 'Unknown error',
         ]);
+
+        // If we reach this point the failure is terminal: fail the job with a specialized
+        // exception so the failed-jobs store records the endpoint, method, status and error.
+        $this->fail(ClickUpApiCallFailedException::fromResponse($this->endpoint, $this->method, $response));
     }
 
     /**
@@ -144,6 +149,12 @@ class ClickUpApiCallJob implements ShouldQueue
      */
     public function failed(?Throwable $e): void
     {
+        // Terminal HTTP failures already emitted an accurate completion event in handle();
+        // re-dispatching here would duplicate it with a bogus statusCode 0.
+        if ($e instanceof ClickUpApiCallFailedException) {
+            return;
+        }
+
         ClickUpApiCallCompleted::dispatch(
             $this->endpoint,
             $this->method,

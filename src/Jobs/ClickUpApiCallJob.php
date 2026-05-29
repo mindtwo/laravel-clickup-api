@@ -12,15 +12,15 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
 use Mindtwo\LaravelClickUpApi\Enums\EventSource;
 use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskCreated;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskDeleted;
 use Mindtwo\LaravelClickUpApi\Events\Tasks\TaskUpdated;
-use Mindtwo\LaravelClickUpApi\Http\LazyResponseProxy;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
+use Throwable;
 
 class ClickUpApiCallJob implements ShouldQueue
 {
@@ -36,9 +36,9 @@ class ClickUpApiCallJob implements ShouldQueue
     public int $tries = 5;
 
     /**
-     * The number of seconds to wait before retrying the job.
+     * The maximum number of seconds the job may run before timing out.
      */
-    public int $backoff = 30;
+    public int $timeout = 30;
 
     /**
      * @param array<string, mixed> $body
@@ -81,9 +81,9 @@ class ClickUpApiCallJob implements ShouldQueue
             default                => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
         };
 
-        $this->validateResponse($response);
-
-        // Dispatch event with response data
+        // Always notify listeners of the outcome (success AND failure). Emitting on
+        // failure is what lets consumers react to e.g. a 404 (deleted task) - the old
+        // code threw before dispatching, so failure events never fired.
         ClickUpApiCallCompleted::dispatch(
             $this->endpoint,
             $this->method,
@@ -92,8 +92,29 @@ class ClickUpApiCallJob implements ShouldQueue
             $response->successful(),
         );
 
-        // Dispatch task-specific events
-        $this->dispatchTaskEvents($response);
+        if ($response->successful()) {
+            $this->dispatchTaskEvents($response);
+
+            return;
+        }
+
+        $status = $response->status();
+
+        // Retry only transient failures (rate limiting / server errors), honoring
+        // ClickUp's Retry-After. Terminal 4xx (e.g. 404 deleted, 400 bad request)
+        // must NOT be retried - that was a source of pointless retry storms.
+        if (($status === 429 || $status >= 500) && $this->attempts() < $this->tries) {
+            $this->release($this->retryAfterSeconds($response));
+
+            return;
+        }
+
+        Log::warning('ClickUp API call failed (terminal)', [
+            'endpoint' => $this->endpoint,
+            'method'   => $this->method,
+            'status'   => $status,
+            'error'    => $response->json()['err'] ?? 'Unknown error',
+        ]);
     }
 
     /**
@@ -104,6 +125,57 @@ class ClickUpApiCallJob implements ShouldQueue
     public function middleware(): array
     {
         return [new RateLimited('clickup-api-jobs')];
+    }
+
+    /**
+     * Exponential backoff (seconds) between retry attempts.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 60, 120];
+    }
+
+    /**
+     * Handle a job that has ultimately failed (e.g. connection timeout with no
+     * HTTP response). The response-based path already emits a failure event for
+     * any received non-200; this covers the no-response case.
+     */
+    public function failed(?Throwable $e): void
+    {
+        ClickUpApiCallCompleted::dispatch(
+            $this->endpoint,
+            $this->method,
+            ['err' => $e?->getMessage() ?? 'ClickUp API job failed'],
+            0,
+            false,
+        );
+    }
+
+    /**
+     * Resolve how long to wait before retrying, honoring ClickUp rate-limit headers.
+     */
+    private function retryAfterSeconds(Response $response): int
+    {
+        $retryAfter = $response->header('Retry-After');
+
+        if (is_numeric($retryAfter)) {
+            return max(1, (int) $retryAfter);
+        }
+
+        // ClickUp exposes the reset moment as a UNIX timestamp.
+        $reset = $response->header('X-RateLimit-Reset');
+
+        if (is_numeric($reset)) {
+            $delta = (int) $reset - time();
+
+            if ($delta > 0) {
+                return $delta;
+            }
+        }
+
+        return 30;
     }
 
     /**
@@ -153,21 +225,6 @@ class ClickUpApiCallJob implements ShouldQueue
             );
 
             return;
-        }
-    }
-
-    /**
-     * Validate HTTP response status and throw a runtime exception on failure.
-     *
-     * **Warning:** This method will execute lazy responses, no job retrieval will be possible after calling this.
-     *
-     * @throws RuntimeException
-     */
-    private function validateResponse(Response|LazyResponseProxy $response): void
-    {
-        if ($response->status() !== 200) {
-            $error = $response->json()['err'] ?? 'Unknown error';
-            throw new RuntimeException("ClickUp Api call failed: {$error}");
         }
     }
 }

@@ -311,6 +311,73 @@ test('job handles webhooks with missing fail count', function () {
     expect($webhook->fail_count)->toBe(0);
 });
 
+test('auto_restore re-asserts required events for each managed target', function () {
+    config([
+        'clickup-api.webhook.auto_restore'    => true,
+        'clickup-api.webhook.required_events' => ['taskCreated', 'taskDeleted'],
+    ]);
+
+    ClickUpWebhook::create([
+        'clickup_webhook_id' => 'wh_space',
+        'endpoint'           => 'https://app.test/webhooks/clickup',
+        'event'              => 'taskCreated',
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+        'secret'             => 'test-secret',
+        'is_active'          => true,
+        'health_status'      => WebhookHealthStatus::ACTIVE,
+    ]);
+
+    $response = Mockery::mock(LazyResponseProxy::class);
+    $response->shouldReceive('status')->andReturn(200);
+    $response->shouldReceive('json')->andReturn(['webhooks' => []]);
+
+    $webhooksEndpoint = Mockery::mock(Webhooks::class);
+    $webhooksEndpoint->shouldReceive('index')->with('workspace_123')->once()->andReturn($response);
+    $webhooksEndpoint->shouldReceive('ensureManaged')
+        ->once()
+        ->with('workspace_123', Mockery::on(function ($desired) {
+            return is_array($desired)
+                && count($desired) === 2
+                && ($desired[0]['space_id'] ?? null) === 's1'
+                && in_array('taskCreated', $desired[0]['events'], true)
+                && in_array('taskDeleted', $desired[1]['events'], true);
+        }))
+        ->andReturn(collect());
+
+    Log::shouldReceive('info')->andReturnNull();
+    Log::shouldReceive('debug')->andReturnNull();
+    Log::shouldReceive('warning')->andReturnNull();
+
+    (new CheckWebhookHealth)->handle($webhooksEndpoint);
+});
+
+test('auto_restore disabled (default) does not call ensureManaged', function () {
+    ClickUpWebhook::create([
+        'clickup_webhook_id' => 'wh_space',
+        'endpoint'           => 'https://app.test/webhooks/clickup',
+        'event'              => 'taskCreated',
+        'target_type'        => 'space',
+        'target_id'          => 's1',
+        'secret'             => 'test-secret',
+        'is_active'          => true,
+        'health_status'      => WebhookHealthStatus::ACTIVE,
+    ]);
+
+    $response = Mockery::mock(LazyResponseProxy::class);
+    $response->shouldReceive('status')->andReturn(200);
+    $response->shouldReceive('json')->andReturn(['webhooks' => []]);
+
+    $webhooksEndpoint = Mockery::mock(Webhooks::class);
+    $webhooksEndpoint->shouldReceive('index')->with('workspace_123')->once()->andReturn($response);
+    $webhooksEndpoint->shouldReceive('ensureManaged')->never();
+
+    Log::shouldReceive('info')->andReturnNull();
+    Log::shouldReceive('debug')->andReturnNull();
+
+    (new CheckWebhookHealth)->handle($webhooksEndpoint);
+});
+
 /**
  * Create a test webhook in the database.
  */

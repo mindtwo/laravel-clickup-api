@@ -53,6 +53,57 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTP Client Timeouts
+    |--------------------------------------------------------------------------
+    |
+    | Hard limits applied to every outbound ClickUp request so a hung connection
+    | can never block a queue worker (or a web request) indefinitely. Values are
+    | in seconds.
+    |
+    */
+
+    'http' => [
+        'timeout'         => (int) env('MINDTWO_CLICKUP_HTTP_TIMEOUT', 10),
+        'connect_timeout' => (int) env('MINDTWO_CLICKUP_HTTP_CONNECT_TIMEOUT', 5),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Delivery Retention
+    |--------------------------------------------------------------------------
+    |
+    | Number of days webhook delivery records are kept before Laravel's
+    | model:prune command removes them. Prevents the deliveries table from
+    | growing without bound.
+    |
+    */
+
+    'deliveries' => [
+        'retention_days' => (int) env('MINDTWO_CLICKUP_DELIVERY_RETENTION_DAYS', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scheduled Maintenance
+    |--------------------------------------------------------------------------
+    |
+    | Opt-in recurring maintenance the package registers on the application's
+    | scheduler. All flags default to false so consuming apps keep full control
+    | and nothing runs unless explicitly enabled.
+    |
+    */
+
+    'schedule' => [
+        // Run CheckWebhookHealth (sync health + optional auto-restore) on a cadence.
+        'health_check' => (bool) env('MINDTWO_CLICKUP_SCHEDULE_HEALTH_CHECK', false),
+        // Reactivate failing/suspended webhooks via clickup:webhook-recover --all.
+        'auto_recover' => (bool) env('MINDTWO_CLICKUP_SCHEDULE_AUTO_RECOVER', false),
+        // Prune old webhook delivery records via model:prune.
+        'prune_deliveries' => (bool) env('MINDTWO_CLICKUP_SCHEDULE_PRUNE_DELIVERIES', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ClickUp Mappings
     |--------------------------------------------------------------------------
     |
@@ -107,6 +158,12 @@ return [
             'taskStatusUpdated',
             'taskDeleted',
         ],
+
+        // When true, CheckWebhookHealth re-asserts the required_events coverage
+        // for every target it already manages (recreating a dropped taskDeleted
+        // webhook, reactivating a suspended one). Opt-in: defaults to off so the
+        // health check only syncs status unless explicitly enabled.
+        'auto_restore' => (bool) env('MINDTWO_CLICKUP_WEBHOOK_AUTO_RESTORE', false),
     ],
 
     /*

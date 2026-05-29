@@ -31,6 +31,8 @@ class ClickUpClient
         protected string $baseUrl = 'https://api.clickup.com/api/v2'
     ) {
         $this->client = Http::baseUrl($this->baseUrl)
+            ->timeout((int) config('clickup-api.http.timeout', 10))
+            ->connectTimeout((int) config('clickup-api.http.connect_timeout', 5))
             ->withHeaders([
                 'Authorization' => $this->apiKey,
                 'Accept'        => 'application/json',

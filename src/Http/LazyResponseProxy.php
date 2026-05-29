@@ -7,6 +7,7 @@ namespace Mindtwo\LaravelClickUpApi\Http;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Mindtwo\LaravelClickUpApi\ClickUpClient;
+use Mindtwo\LaravelClickUpApi\Events\ClickUpApiCallCompleted;
 use Mindtwo\LaravelClickUpApi\Jobs\ClickUpApiCallJob;
 use RuntimeException;
 
@@ -120,6 +121,16 @@ class LazyResponseProxy
         };
 
         $this->executed = true;
+
+        // Mirror the queued ClickUpApiCallJob so synchronous and queued execution
+        // emit the same lifecycle event (success AND failure).
+        ClickUpApiCallCompleted::dispatch(
+            $this->endpoint,
+            $this->method,
+            $this->response->json() ?? [],
+            $this->response->status(),
+            $this->response->successful(),
+        );
 
         return $this->response;
     }

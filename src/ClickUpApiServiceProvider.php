@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Mindtwo\LaravelClickUpApi;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Mindtwo\LaravelClickUpApi\Commands\ListCustomFieldsCommand;
 use Mindtwo\LaravelClickUpApi\Commands\RecoverWebhookCommand;
+use Mindtwo\LaravelClickUpApi\Commands\WebhookHealthCommand;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Attachment;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\AuthorizedUser;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\CustomField;
@@ -25,6 +27,7 @@ use Mindtwo\LaravelClickUpApi\Http\Endpoints\TaskList;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Views;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Webhooks;
 use Mindtwo\LaravelClickUpApi\Http\Endpoints\Workspaces;
+use Mindtwo\LaravelClickUpApi\Models\ClickUpWebhookDelivery;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -41,6 +44,7 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
             ->name('laravel-clickup-api')
             ->hasCommand(ListCustomFieldsCommand::class)
             ->hasCommand(RecoverWebhookCommand::class)
+            ->hasCommand(WebhookHealthCommand::class)
             ->hasConfigFile();
     }
 
@@ -90,10 +94,39 @@ class ClickUpApiServiceProvider extends PackageServiceProvider
         // Register event logging listener
         $this->registerEventLogging();
 
+        // Register opt-in scheduled maintenance
+        $this->registerSchedule();
+
         // Publish migrations
         $this->publishes([
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'clickup-api-migrations');
+    }
+
+    /**
+     * Register opt-in scheduled maintenance tasks.
+     *
+     * Every task is gated behind a `clickup-api.schedule.*` flag that defaults to
+     * false, so nothing runs unless the consuming application opts in.
+     */
+    protected function registerSchedule(): void
+    {
+        $this->app->booted(function (): void {
+            /** @var Schedule $schedule */
+            $schedule = $this->app->make(Schedule::class);
+
+            if (config('clickup-api.schedule.health_check', false)) {
+                $schedule->command('clickup:webhook-health')->everyThirtyMinutes();
+            }
+
+            if (config('clickup-api.schedule.auto_recover', false)) {
+                $schedule->command('clickup:webhook-recover', ['--all' => true])->hourly();
+            }
+
+            if (config('clickup-api.schedule.prune_deliveries', false)) {
+                $schedule->command('model:prune', ['--model' => [ClickUpWebhookDelivery::class]])->daily();
+            }
+        });
     }
 
     /**

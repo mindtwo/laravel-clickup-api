@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Mindtwo\LaravelClickUpApi\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -22,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ClickUpWebhookDelivery extends Model
 {
+    use Prunable;
+
     protected $table = 'clickup_webhook_deliveries';
 
     protected $fillable = [
@@ -38,6 +42,19 @@ class ClickUpWebhookDelivery extends Model
         'payload'            => 'array',
         'processing_time_ms' => 'integer',
     ];
+
+    /**
+     * Records older than the configured retention window are pruned by
+     * Laravel's model:prune command, preventing unbounded table growth.
+     *
+     * @return Builder<ClickUpWebhookDelivery>
+     */
+    public function prunable(): Builder
+    {
+        $days = (int) config('clickup-api.deliveries.retention_days', 30);
+
+        return static::where('created_at', '<=', now()->subDays($days));
+    }
 
     /**
      * @return BelongsTo<ClickUpWebhook, $this>

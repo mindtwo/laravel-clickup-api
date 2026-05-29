@@ -48,6 +48,12 @@ class CheckWebhookHealth implements ShouldQueue
 
             $this->checkWorkspaceWebhooks($workspaceId, $webhooksEndpoint);
 
+            // Opt-in: re-assert that every managed target still has all required
+            // event webhooks active, recreating any that were dropped/suspended.
+            if (config('clickup-api.webhook.auto_restore', false)) {
+                $this->ensureRequiredWebhooks($workspaceId, $webhooksEndpoint);
+            }
+
             Log::info('Webhook health check completed');
         } catch (Throwable $e) {
             Log::error('Webhook health check failed', [
@@ -163,6 +169,69 @@ class CheckWebhookHealth implements ShouldQueue
                 'fail_count' => $webhook->fail_count,
             ]);
         }
+    }
+
+    /**
+     * Re-assert required-event coverage for every target already managed locally.
+     *
+     * Uses the targets that already exist in the database (so no target guessing
+     * is needed) and lets Webhooks::ensureManaged() create/reactivate only what is
+     * missing. This restores e.g. a dropped taskDeleted webhook for a space that
+     * already has the other event webhooks.
+     */
+    protected function ensureRequiredWebhooks(int|string $workspaceId, Webhooks $webhooksEndpoint): void
+    {
+        /** @var array<int, string> $requiredEvents */
+        $requiredEvents = config('clickup-api.webhook.required_events', []);
+
+        if (empty($requiredEvents)) {
+            return;
+        }
+
+        $targets = ClickUpWebhook::query()
+            ->get()
+            ->groupBy(fn (ClickUpWebhook $webhook): string => $webhook->target_type.':'.$webhook->target_id);
+
+        foreach ($targets as $group) {
+            $sample = $group->first();
+
+            if (! $sample instanceof ClickUpWebhook) {
+                continue;
+            }
+
+            $webhooksEndpoint->ensureManaged($workspaceId, $this->buildDesiredSpecs($sample, $requiredEvents));
+        }
+    }
+
+    /**
+     * Build one ensureManaged spec per required event for the sample's target.
+     *
+     * @param array<int, string> $requiredEvents
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildDesiredSpecs(ClickUpWebhook $sample, array $requiredEvents): array
+    {
+        $targetKey = match ($sample->target_type) {
+            'space'  => 'space_id',
+            'folder' => 'folder_id',
+            'list'   => 'list_id',
+            'task'   => 'task_id',
+            default  => null,
+        };
+
+        return array_map(function (string $event) use ($sample, $targetKey): array {
+            $spec = [
+                'events'   => [$event],
+                'endpoint' => $sample->endpoint,
+            ];
+
+            if ($targetKey !== null) {
+                $spec[$targetKey] = $sample->target_id;
+            }
+
+            return $spec;
+        }, $requiredEvents);
     }
 
     /**

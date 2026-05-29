@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.3.0 - 2026-05-29
+
+### What's Changed
+
+* Build(deps-dev): bump @semantic-release/github from 12.0.6 to 12.0.8 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/86
+* Feature/webhook enhancements by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/91
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/compare/2.2.0...2.3.0
+
 ## 2.2.0 - 2026-05-07
 
 ### What's Changed
@@ -243,6 +252,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 
 
 
+
 ```
 ### Upgrade Guide (1.x → 2.0.0)
 
@@ -260,6 +270,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    
    
    

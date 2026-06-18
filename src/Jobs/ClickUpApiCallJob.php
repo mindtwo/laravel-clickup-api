@@ -8,6 +8,7 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
@@ -74,13 +75,32 @@ class ClickUpApiCallJob implements ShouldQueue
         }
 
         // Execute the request based on HTTP method
-        $response = match ($this->method) {
-            Request::METHOD_GET    => $client->get($this->endpoint, $this->queryParams),
-            Request::METHOD_POST   => $client->post($this->endpoint, $this->body),
-            Request::METHOD_PUT    => $client->put($this->endpoint, $this->body),
-            Request::METHOD_DELETE => $client->delete($this->endpoint, $this->queryParams),
-            default                => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
-        };
+        try {
+            $response = match ($this->method) {
+                Request::METHOD_GET    => $client->get($this->endpoint, $this->queryParams),
+                Request::METHOD_POST   => $client->post($this->endpoint, $this->body),
+                Request::METHOD_PUT    => $client->put($this->endpoint, $this->body),
+                Request::METHOD_DELETE => $client->delete($this->endpoint, $this->queryParams),
+                default                => throw new \InvalidArgumentException("Unsupported HTTP method: {$this->method}"),
+            };
+        } catch (ConnectionException $e) {
+            // No-response transport failure (e.g. cURL 28 timeout). Treat it as transient and
+            // release with the SAME backoff schedule used for 429/5xx, bounded by $tries, instead
+            // of letting the exception bubble to the queue worker on every attempt (which reports
+            // the same timeout to the exception handler again and again). On exhaustion, fail
+            // terminally so failed() records it and emits the completion event exactly once.
+            if ($this->attempts() < $this->tries) {
+                $backoff = $this->backoff();
+
+                $this->release($backoff[$this->attempts() - 1] ?? (int) end($backoff));
+
+                return;
+            }
+
+            $this->fail($e);
+
+            return;
+        }
 
         // Always notify listeners of the outcome (success AND failure). Emitting on
         // failure is what lets consumers react to e.g. a 404 (deleted task) - the old

@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-clickup-api` will be documented in this file.
 
+## 2.4.0 - 2026-06-30
+
+### What's Changed
+
+* Build(deps-dev): bump semantic-release from 25.0.3 to 25.0.5 by @dependabot[bot] in https://github.com/mindtwo/laravel-clickup-api/pull/97
+* feat(webhooks): handle connection timeouts with backoff strategy in ClickUpApiCallJob by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/99
+* Feature/package updates by @Hysterikon in https://github.com/mindtwo/laravel-clickup-api/pull/103
+
+**Full Changelog**: https://github.com/mindtwo/laravel-clickup-api/compare/2.3.0...2.4.0
+
 ## 2.3.0 - 2026-05-29
 
 ### What's Changed
@@ -253,6 +263,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
 
 
 
+
 ```
 ### Upgrade Guide (1.x → 2.0.0)
 
@@ -270,6 +281,7 @@ CLICKUP_API_RATE_LIMIT_PER_MINUTE=100
        ->hourly()
        ->name('clickup-webhook-health-check')
        ->withoutOverlapping();
+   
    
    
    

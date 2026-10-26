@@ -154,5 +154,6 @@ Thumbs.db
 # custom project files and directories
 .env
 /package.xml
+composer.lock
 build/phpstan
 report.junit.xml
